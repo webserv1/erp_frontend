@@ -1,0 +1,13 @@
+import { Bell, Menu } from 'lucide-react'
+import { useAuth } from '../../hooks/useAuth'
+
+export const AppHeader = ({ onMenuClick }: { onMenuClick: () => void }) => {
+  const { user, lastLogoutAt } = useAuth()
+  const formatLogoutTime = (iso?: string | null) => {
+    if (!iso) return 'Never'
+    const date = new Date(iso)
+    return date.toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })
+  }
+
+  return <header className="flex h-18 items-center justify-between border-b border-slate-100 bg-white px-5 lg:px-8"><button onClick={onMenuClick} className="rounded-lg p-2 text-secondary hover:bg-amber-50 lg:hidden"><Menu /></button><div className="hidden lg:block"><p className="text-sm text-text-secondary">Welcome back</p><h1 className="font-bold text-secondary">{user?.company?.name ?? 'Your company'}</h1></div><div className="ml-auto flex items-center gap-4"><button className="relative rounded-lg p-2 text-secondary hover:bg-amber-50"><Bell size={20} /><span className="absolute right-2 top-2 size-2 rounded-full bg-primary" /></button><div className="text-right"><p className="text-sm font-semibold">{user?.name}</p><p className="text-xs text-primary-dark">{user?.role.name}</p><span className="inline-block size-2 rounded-full bg-green-500" title="Online" />{lastLogoutAt && <p className="text-[10px] text-text-secondary">Last logout: {formatLogoutTime(lastLogoutAt)}</p>}</div></div></header>
+}
