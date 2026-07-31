@@ -117,6 +117,7 @@ export interface Purchase {
   paidAmount: number
   paymentStatus: 'UNPAID' | 'PARTIAL' | 'PAID' | 'OVERDUE'
   remarks?: string
+  status: boolean
   createdAt: string
   updatedAt: string
   supplier?: { id: number; name: string; mobile: string }
@@ -125,6 +126,39 @@ export interface Purchase {
 
 export interface PurchaseListResponse {
   purchase: Purchase[]
+  total: number
+  page: number
+  limit: number
+}
+
+export interface Sale {
+  id: number
+  companyId: number
+  productId?: number
+  productName: string
+  productCode: string
+  supplierId?: number
+  supplierName?: string
+  supplierMobile?: string
+  supplierEmail?: string
+  supplierAddress?: string
+  sizeId: number
+  colorId: number
+  quantity: number
+  unit: 'PIECES' | 'DOZEN'
+  salePrice: number
+  purchasePrice: number
+  total: number
+  status: boolean
+  createdAt: string
+  updatedAt: string
+  size?: { id: number; name: string }
+  color?: { id: number; name: string }
+  supplier?: { id: number; name: string; mobile: string }
+}
+
+export interface SaleListResponse {
+  sale: Sale[]
   total: number
   page: number
   limit: number

@@ -51,6 +51,7 @@ export const PartyMaster = () => {
   const [total, setTotal] = useState(0)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
+  const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
     let cancelled = false
@@ -74,7 +75,7 @@ export const PartyMaster = () => {
     }
     loadParties()
     return () => { cancelled = true }
-  }, [search, statusFilter, page, limit, toast])
+  }, [search, statusFilter, page, limit, refreshKey, toast])
 
   const resetForm = () => {
     setForm(emptyForm)
@@ -134,6 +135,7 @@ export const PartyMaster = () => {
       }
       resetForm()
       setPage(1)
+      setRefreshKey((key) => key + 1)
     } catch (err) {
       toast({ title: editing ? 'Update failed' : 'Creation failed', description: (err as Error).message, variant: 'error' })
     }
@@ -144,6 +146,7 @@ export const PartyMaster = () => {
       await partyApi.remove(row.id)
       toast({ title: 'Party deleted', variant: 'success' })
       setPage((p) => Math.max(1, p - 1))
+      setRefreshKey((key) => key + 1)
     } catch (err) {
       toast({ title: 'Delete failed', description: (err as Error).message, variant: 'error' })
     }

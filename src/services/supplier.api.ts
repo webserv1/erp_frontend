@@ -1,6 +1,8 @@
 import type { ApiError } from '../types/auth.types'
 import type { Supplier, SupplierListResponse } from '../types/product.types'
 
+type SupplierPayload = Omit<Supplier, 'id' | 'companyId' | 'createdAt' | 'updatedAt'>
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 
 if (!API_BASE_URL) {
@@ -50,7 +52,7 @@ export const supplierApi = {
     return request<Record<string, unknown>>(`/suppliers${qs ? `?${qs}` : ''}`).then(normalizeSupplierList)
   },
   get: (id: number) => request<{ supplier: Supplier }>(`/suppliers/${id}`).then((res) => res.supplier),
-  create: (payload: Omit<Supplier, 'id' | 'createdAt' | 'updatedAt'>) => request<Supplier>('/suppliers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }),
-  update: (id: number, payload: Partial<Omit<Supplier, 'id' | 'createdAt' | 'updatedAt'>>) => request<Supplier>(`/suppliers/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }),
+  create: (payload: SupplierPayload) => request<Supplier>('/suppliers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }),
+  update: (id: number, payload: Partial<SupplierPayload>) => request<Supplier>(`/suppliers/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }),
   remove: (id: number) => request<{ message: string }>(`/suppliers/${id}`, { method: 'DELETE' }),
 }

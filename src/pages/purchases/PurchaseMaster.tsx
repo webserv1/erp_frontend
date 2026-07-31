@@ -9,6 +9,8 @@ import { purchaseApi } from '../../services/purchase.api'
 import { supplierApi } from '../../services/supplier.api'
 import type { Purchase, Supplier } from '../../types/product.types'
 
+type PaymentStatus = Purchase['paymentStatus']
+
 type FormState = {
   purchaseNumber: string
   supplierId: string
@@ -19,7 +21,7 @@ type FormState = {
   discount: string
   grandTotal: string
   paidAmount: string
-  paymentStatus: string
+  paymentStatus: PaymentStatus
   remarks: string
   status: boolean
 }
@@ -266,7 +268,7 @@ export const PurchaseMaster = () => {
             <FormField label="Grand Total" required><Input required type="number" value={form.grandTotal} onChange={(e) => setForm({ ...form, grandTotal: e.target.value })} /></FormField>
             <FormField label="Paid Amount" required><Input required type="number" value={form.paidAmount} onChange={(e) => setForm({ ...form, paidAmount: e.target.value })} /></FormField>
             <FormField label="Payment Status">
-              <Select value={form.paymentStatus} onChange={(e) => setForm({ ...form, paymentStatus: e.target.value })}>
+              <Select value={form.paymentStatus} onChange={(e) => setForm({ ...form, paymentStatus: e.target.value as PaymentStatus })}>
                 <option value="UNPAID">Unpaid</option>
                 <option value="PARTIAL">Partial</option>
                 <option value="PAID">Paid</option>

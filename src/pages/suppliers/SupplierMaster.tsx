@@ -47,6 +47,7 @@ export const SupplierMaster = () => {
   const [total, setTotal] = useState(0)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
+  const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
     let cancelled = false
@@ -70,7 +71,7 @@ export const SupplierMaster = () => {
     }
     loadSuppliers()
     return () => { cancelled = true }
-  }, [search, statusFilter, page, limit, toast])
+  }, [search, statusFilter, page, limit, refreshKey, toast])
 
   const resetForm = () => {
     setForm(emptyForm)
@@ -126,6 +127,7 @@ export const SupplierMaster = () => {
       }
       resetForm()
       setPage(1)
+      setRefreshKey((key) => key + 1)
     } catch (err) {
       toast({ title: editing ? 'Update failed' : 'Creation failed', description: (err as Error).message, variant: 'error' })
     }
@@ -136,6 +138,7 @@ export const SupplierMaster = () => {
       await supplierApi.remove(row.id)
       toast({ title: 'Supplier deleted', variant: 'success' })
       setPage((p) => Math.max(1, p - 1))
+      setRefreshKey((key) => key + 1)
     } catch (err) {
       toast({ title: 'Delete failed', description: (err as Error).message, variant: 'error' })
     }

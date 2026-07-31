@@ -1,6 +1,8 @@
 import type { ApiError } from '../types/auth.types'
 import type { Purchase, PurchaseListResponse } from '../types/product.types'
 
+type PurchasePayload = Omit<Purchase, 'id' | 'companyId' | 'createdById' | 'createdAt' | 'updatedAt'>
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 
 if (!API_BASE_URL) {
@@ -54,7 +56,7 @@ export const purchaseApi = {
     return request<Record<string, unknown>>(`/purchases${qs ? `?${qs}` : ''}`).then(normalizePurchaseList)
   },
   get: (id: number) => request<{ purchase: Purchase }>(`/purchases/${id}`).then((res) => res.purchase),
-  create: (payload: Omit<Purchase, 'id' | 'createdAt' | 'updatedAt'>) => request<Purchase>('/purchases', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }),
-  update: (id: number, payload: Partial<Omit<Purchase, 'id' | 'createdAt' | 'updatedAt'>>) => request<Purchase>(`/purchases/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }),
+  create: (payload: PurchasePayload) => request<Purchase>('/purchases', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }),
+  update: (id: number, payload: Partial<PurchasePayload>) => request<Purchase>(`/purchases/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }),
   remove: (id: number) => request<{ message: string }>(`/purchases/${id}`, { method: 'DELETE' }),
 }
