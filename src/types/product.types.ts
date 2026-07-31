@@ -101,3 +101,31 @@ export interface SupplierListResponse {
   page: number
   limit: number
 }
+
+export interface Purchase {
+  id: number
+  companyId: number
+  purchaseNumber: string
+  supplierId: number
+  createdById?: number
+  invoiceDate: string
+  dueDate: string
+  subTotal: number
+  gstAmount: number
+  discount: number
+  grandTotal: number
+  paidAmount: number
+  paymentStatus: 'UNPAID' | 'PARTIAL' | 'PAID' | 'OVERDUE'
+  remarks?: string
+  createdAt: string
+  updatedAt: string
+  supplier?: { id: number; name: string; mobile: string }
+  createdBy?: { id: number; name: string }
+}
+
+export interface PurchaseListResponse {
+  purchase: Purchase[]
+  total: number
+  page: number
+  limit: number
+}

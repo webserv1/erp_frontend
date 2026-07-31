@@ -13,6 +13,7 @@ import { ColorMaster } from '../pages/products/masters/ColorMaster'
 import { SizeMaster } from '../pages/products/masters/SizeMaster'
 import { PartyMaster } from '../pages/parties/PartyMaster'
 import { SupplierMaster } from '../pages/suppliers/SupplierMaster'
+import { PurchaseMaster } from '../pages/purchases/PurchaseMaster'
 
 export const AppRoutes = () => (
   <Routes>
@@ -31,6 +32,7 @@ export const AppRoutes = () => (
         <Route path="/product-masters/size" element={<SizeMaster />} />
         <Route path="/parties" element={<PartyMaster />} />
         <Route path="/suppliers" element={<SupplierMaster />} />
+        <Route path="/purchases" element={<PurchaseMaster />} />
       </Route>
     </Route>
     <Route path="/" element={<Navigate to="/dashboard" replace />} />

@@ -1,4 +1,4 @@
-import { Boxes, LayoutDashboard, Users, Truck } from 'lucide-react'
+import { Boxes, LayoutDashboard, Users, Truck, ShoppingCart } from 'lucide-react'
 import type { UserRole } from '../types/auth.types'
 
 export type NavigationItem = {
@@ -23,4 +23,5 @@ export const APP_NAVIGATION: NavigationItem[] = [
   },
   { label: 'Party Master', path: '/parties', icon: Users, roles: ['ADMIN', 'MANAGER'] },
   { label: 'Supplier Master', path: '/suppliers', icon: Truck, roles: ['ADMIN', 'MANAGER'] },
+  { label: 'Purchase Master', path: '/purchases', icon: ShoppingCart, roles: ['ADMIN', 'MANAGER'] },
 ]
