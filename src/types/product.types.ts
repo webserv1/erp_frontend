@@ -163,3 +163,28 @@ export interface SaleListResponse {
   page: number
   limit: number
 }
+
+export interface Stock {
+  id: number
+  companyId: number
+  productCode: string
+  productName: string
+  sizeId: number
+  qtyIn: number
+  qtyOut: number
+  balanceStock: number
+  salePrice: number
+  saleValue: number
+  remarks?: string
+  status: boolean
+  createdAt: string
+  updatedAt: string
+  size?: { id: number; name: string }
+}
+
+export interface StockListResponse {
+  stock: Stock[]
+  total: number
+  page: number
+  limit: number
+}
