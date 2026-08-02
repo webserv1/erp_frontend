@@ -18,7 +18,6 @@ type FormState = {
   state: string
   country: string
   pincode: string
-  partyProfit: string
   status: boolean
 }
 
@@ -32,7 +31,6 @@ const emptyForm: FormState = {
   state: '',
   country: '',
   pincode: '',
-  partyProfit: '0',
   status: true,
 }
 
@@ -99,7 +97,6 @@ export const PartyMaster = () => {
       state: row.state,
       country: row.country,
       pincode: row.pincode,
-      partyProfit: String(row.partyProfit),
       status: row.status,
     })
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -122,7 +119,6 @@ export const PartyMaster = () => {
         state: form.state,
         country: form.country,
         pincode: form.pincode,
-        partyProfit: Number(form.partyProfit) || 0,
         status: form.status,
       }
 
@@ -204,7 +200,6 @@ export const PartyMaster = () => {
             <FormField label="State" required><Input required value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} /></FormField>
             <FormField label="Country" required><Input required value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} /></FormField>
             <FormField label="Pincode" required><Input required value={form.pincode} onChange={(e) => setForm({ ...form, pincode: e.target.value })} /></FormField>
-            <FormField label="Party Profit"><Input type="number" value={form.partyProfit} onChange={(e) => setForm({ ...form, partyProfit: e.target.value })} /></FormField>
             <FormField label="Status">
               <Select value={form.status ? 'ACTIVE' : 'INACTIVE'} onChange={(e) => setForm({ ...form, status: e.target.value === 'ACTIVE' })}>
                 <option value="ACTIVE">Active</option>
@@ -270,7 +265,6 @@ export const PartyMaster = () => {
                 <tr><td className="px-4 py-2 font-semibold text-text-secondary">State</td><td className="px-4 py-2 text-secondary">{viewing.state}</td></tr>
                 <tr><td className="px-4 py-2 font-semibold text-text-secondary">Country</td><td className="px-4 py-2 text-secondary">{viewing.country}</td></tr>
                 <tr><td className="px-4 py-2 font-semibold text-text-secondary">Pincode</td><td className="px-4 py-2 text-secondary">{viewing.pincode}</td></tr>
-                <tr><td className="px-4 py-2 font-semibold text-text-secondary">Party Profit</td><td className="px-4 py-2 text-secondary">{viewing.partyProfit}</td></tr>
                 <tr><td className="px-4 py-2 font-semibold text-text-secondary">Status</td><td className="px-4 py-2 text-secondary">{viewing.status ? 'Active' : 'Inactive'}</td></tr>
               </tbody>
             </table>

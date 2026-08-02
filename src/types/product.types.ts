@@ -66,7 +66,6 @@ export interface Party {
   state: string
   country: string
   pincode: string
-  partyProfit: number
   status: boolean
   createdAt: string
   updatedAt: string
@@ -137,6 +136,8 @@ export interface Sale {
   productId?: number
   productName: string
   productCode: string
+  partyId: number
+  partyName: string
   supplierId?: number
   supplierName?: string
   supplierMobile?: string
@@ -149,12 +150,15 @@ export interface Sale {
   salePrice: number
   purchasePrice: number
   total: number
+  perSaleProfit: number
+  totalSaleProfit: number
   status: boolean
   createdAt: string
   updatedAt: string
   size?: { id: number; name: string }
   color?: { id: number; name: string }
   supplier?: { id: number; name: string; mobile: string }
+  party?: { id: number; partyName: string }
 }
 
 export interface SaleListResponse {

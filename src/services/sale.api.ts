@@ -1,7 +1,7 @@
 import type { ApiError } from '../types/auth.types'
 import type { Sale, SaleListResponse } from '../types/product.types'
 
-type SalePayload = Omit<Sale, 'id' | 'companyId' | 'total' | 'createdAt' | 'updatedAt'>
+type SalePayload = Omit<Sale, 'id' | 'companyId' | 'total' | 'perSaleProfit' | 'totalSaleProfit' | 'createdAt' | 'updatedAt'>
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 
@@ -42,9 +42,10 @@ const normalizeSaleList = (data: Record<string, unknown>): SaleListResponse => {
 }
 
 export const saleApi = {
-  list: (params?: { search?: string; sizeId?: number; colorId?: number; supplierId?: number; startDate?: string; endDate?: string; page?: number; limit?: number }) => {
+  list: (params?: { search?: string; partyId?: number; sizeId?: number; colorId?: number; supplierId?: number; startDate?: string; endDate?: string; page?: number; limit?: number }) => {
     const query = new URLSearchParams()
     if (params?.search) query.append('search', params.search)
+    if (params?.partyId) query.append('partyId', String(params.partyId))
     if (params?.sizeId) query.append('sizeId', String(params.sizeId))
     if (params?.colorId) query.append('colorId', String(params.colorId))
     if (params?.supplierId) query.append('supplierId', String(params.supplierId))

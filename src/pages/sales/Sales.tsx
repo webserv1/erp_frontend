@@ -8,7 +8,8 @@ import { DataTable, type DataTableColumn, type DataTableAction } from '../../com
 import { saleApi } from '../../services/sale.api'
 import { supplierApi } from '../../services/supplier.api'
 import { productApi } from '../../services/product.api'
-import type { Product, Sale, Supplier } from '../../types/product.types'
+import { partyApi } from '../../services/party.api'
+import type { Product, Sale, Supplier, Party } from '../../types/product.types'
 
 type UnitType = 'PIECES' | 'DOZEN'
 
@@ -16,6 +17,8 @@ type FormState = {
   productId: string
   productCode: string
   productName: string
+  partyId: string
+  partyName: string
   supplierId: string
   supplierName: string
   supplierMobile: string
@@ -36,6 +39,8 @@ const emptyForm: FormState = {
   productId: '',
   productCode: '',
   productName: '',
+  partyId: '',
+  partyName: '',
   supplierId: '',
   supplierName: '',
   supplierMobile: '',
@@ -61,6 +66,7 @@ export const Sales = () => {
   const [viewing, setViewing] = useState<Sale | null>(null)
 
   const [items, setItems] = useState<Sale[]>([])
+  const [parties, setParties] = useState<Party[]>([])
   const [suppliers, setSuppliers] = useState<Supplier[]>([])
   const [products, setProducts] = useState<Product[]>([])
   const [productLookupError, setProductLookupError] = useState('')
@@ -74,11 +80,13 @@ export const Sales = () => {
     let cancelled = false
     const loadMasters = async () => {
       try {
-        const [suppliersData, productsData] = await Promise.all([
+        const [partiesData, suppliersData, productsData] = await Promise.all([
+          partyApi.list({ page: 1, limit: 1000 }),
           supplierApi.list(),
           productApi.products.list({ status: true, page: 1, limit: 1000 }),
         ])
         if (!cancelled) {
+          setParties(partiesData.party)
           setSuppliers(suppliersData.supplier)
           setProducts(productsData.products)
         }
@@ -96,6 +104,7 @@ export const Sales = () => {
       try {
         const data = await saleApi.list({
           search: search || undefined,
+          partyId: form.partyId ? Number(form.partyId) : undefined,
           page,
           limit,
         })
@@ -111,7 +120,7 @@ export const Sales = () => {
     }
     loadSales()
     return () => { cancelled = true }
-  }, [search, page, limit, toast])
+  }, [search, form.partyId, page, limit, toast])
 
   const resetForm = () => {
     setForm(emptyForm)
@@ -130,6 +139,8 @@ export const Sales = () => {
       productId: String(row.productId ?? ''),
       productCode: row.productCode,
       productName: row.productName,
+      partyId: String(row.partyId),
+      partyName: row.partyName,
       supplierId: String(row.supplierId ?? ''),
       supplierName: row.supplierName || '',
       supplierMobile: row.supplierMobile || '',
@@ -150,6 +161,18 @@ export const Sales = () => {
 
   const openView = (row: Sale) => {
     setViewing(row)
+  }
+
+  const handlePartyChange = (partyId: string) => {
+    setForm((f) => ({ ...f, partyId }))
+    const party = parties.find((p) => String(p.id) === partyId)
+    if (party) {
+      setForm((f) => ({
+        ...f,
+        partyId: String(party.id),
+        partyName: party.partyName,
+      }))
+    }
   }
 
   const handleSupplierChange = (supplierId: string) => {
@@ -190,11 +213,13 @@ export const Sales = () => {
       const payload = {
         productName: form.productName,
         productCode: form.productCode,
+        partyId: Number(form.partyId),
+        partyName: form.partyName || '',
         supplierId: form.supplierId ? Number(form.supplierId) : undefined,
-        supplierName: form.supplierName || undefined,
-        supplierMobile: form.supplierMobile || undefined,
-        supplierEmail: form.supplierEmail || undefined,
-        supplierAddress: form.supplierAddress || undefined,
+        supplierName: form.supplierName || '',
+        supplierMobile: form.supplierMobile || '',
+        supplierEmail: form.supplierEmail || '',
+        supplierAddress: form.supplierAddress || '',
         sizeId: Number(form.sizeId),
         colorId: Number(form.colorId),
         quantity: Number(form.quantity),
@@ -240,6 +265,7 @@ export const Sales = () => {
   const columns: DataTableColumn<Sale>[] = [
     { key: 'productCode', header: 'Product Code', width: '120px' },
     { key: 'productName', header: 'Product Name' },
+    { key: 'partyName', header: 'Party', cell: (row) => row.partyName || row.party?.partyName || '—' },
     { key: 'supplierName', header: 'Supplier', cell: (row) => row.supplierName || row.supplier?.name || '—' },
     {
       key: 'size',
@@ -268,6 +294,18 @@ export const Sales = () => {
       header: 'Total',
       width: '120px',
       cell: (row) => `₹${row.total}`,
+    },
+    {
+      key: 'perSaleProfit',
+      header: 'Profit',
+      width: '120px',
+      cell: (row) => `₹${row.perSaleProfit}`,
+    },
+    {
+      key: 'totalSaleProfit',
+      header: 'Total Profit',
+      width: '140px',
+      cell: (row) => `₹${row.totalSaleProfit}`,
     },
     {
       key: 'status',
@@ -310,6 +348,13 @@ export const Sales = () => {
               </Select>
             </FormField>
             <FormField label="Product Name" required><Input required value={form.productName} readOnly placeholder="Auto-filled from product code" /></FormField>
+            <FormField label="Party" required>
+              <Select required value={form.partyId} onChange={(e) => handlePartyChange(e.target.value)}>
+                <option value="">Select party</option>
+                {parties.map((p) => <option key={p.id} value={p.id}>{p.partyName}</option>)}
+              </Select>
+            </FormField>
+            <FormField label="Party Name"><Input value={form.partyName} readOnly placeholder="Auto-filled from party" /></FormField>
             <FormField label="Supplier">
               <Select value={form.supplierId} onChange={(e) => handleSupplierChange(e.target.value)}>
                 <option value="">Select supplier</option>
@@ -384,6 +429,7 @@ export const Sales = () => {
               <tbody className="divide-y divide-border-gold">
                 <tr><td className="px-4 py-2 font-semibold text-text-secondary">Product Name</td><td className="px-4 py-2 text-secondary">{viewing.productName}</td></tr>
                 <tr><td className="px-4 py-2 font-semibold text-text-secondary">Product Code</td><td className="px-4 py-2 text-secondary">{viewing.productCode}</td></tr>
+                <tr><td className="px-4 py-2 font-semibold text-text-secondary">Party</td><td className="px-4 py-2 text-secondary">{viewing.partyName || viewing.party?.partyName || '—'}</td></tr>
                 <tr><td className="px-4 py-2 font-semibold text-text-secondary">Supplier</td><td className="px-4 py-2 text-secondary">{viewing.supplier?.name || viewing.supplierName || '—'}</td></tr>
                 <tr><td className="px-4 py-2 font-semibold text-text-secondary">Size</td><td className="px-4 py-2 text-secondary">{viewing.size?.name || '—'}</td></tr>
                 <tr><td className="px-4 py-2 font-semibold text-text-secondary">Color</td><td className="px-4 py-2 text-secondary">{viewing.color?.name || '—'}</td></tr>
@@ -391,6 +437,8 @@ export const Sales = () => {
                 <tr><td className="px-4 py-2 font-semibold text-text-secondary">Sale Price</td><td className="px-4 py-2 text-secondary">₹{viewing.salePrice}</td></tr>
                 <tr><td className="px-4 py-2 font-semibold text-text-secondary">Purchase Price</td><td className="px-4 py-2 text-secondary">₹{viewing.purchasePrice}</td></tr>
                 <tr><td className="px-4 py-2 font-semibold text-text-secondary">Total</td><td className="px-4 py-2 text-secondary">₹{viewing.total}</td></tr>
+                <tr><td className="px-4 py-2 font-semibold text-text-secondary">Per Sale Profit</td><td className="px-4 py-2 text-secondary">₹{viewing.perSaleProfit}</td></tr>
+                <tr><td className="px-4 py-2 font-semibold text-text-secondary">Total Sale Profit</td><td className="px-4 py-2 text-secondary">₹{viewing.totalSaleProfit}</td></tr>
                 <tr><td className="px-4 py-2 font-semibold text-text-secondary">Status</td><td className="px-4 py-2 text-secondary">{viewing.status ? 'Active' : 'Inactive'}</td></tr>
               </tbody>
             </table>

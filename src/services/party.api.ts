@@ -2,6 +2,7 @@ import type { ApiError } from '../types/auth.types'
 import type { Party, PartyListResponse } from '../types/product.types'
 
 type PartyPayload = Omit<Party, 'id' | 'companyId' | 'createdAt' | 'updatedAt'>
+type PartyMutationResponse = { message: string; party: Party }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 
@@ -52,7 +53,7 @@ export const partyApi = {
     return request<Record<string, unknown>>(`/parties${qs ? `?${qs}` : ''}`).then(normalizePartyList)
   },
   get: (id: number) => request<{ party: Party }>(`/parties/${id}`).then((res) => res.party),
-  create: (payload: PartyPayload) => request<Party>('/parties', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }),
-  update: (id: number, payload: Partial<PartyPayload>) => request<Party>(`/parties/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }),
+  create: (payload: PartyPayload) => request<PartyMutationResponse>('/parties', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }),
+  update: (id: number, payload: Partial<PartyPayload>) => request<PartyMutationResponse>(`/parties/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }),
   remove: (id: number) => request<{ message: string }>(`/parties/${id}`, { method: 'DELETE' }),
 }
