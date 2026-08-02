@@ -290,6 +290,12 @@ export const Sales = () => {
       cell: (row) => `₹${row.salePrice}`,
     },
     {
+      key: 'purchasePrice',
+      header: 'Purchase Price',
+      width: '140px',
+      cell: (row) => `₹${row.purchasePrice}`,
+    },
+    {
       key: 'total',
       header: 'Total',
       width: '120px',
@@ -300,12 +306,6 @@ export const Sales = () => {
       header: 'Profit',
       width: '120px',
       cell: (row) => `₹${row.perSaleProfit}`,
-    },
-    {
-      key: 'totalSaleProfit',
-      header: 'Total Profit',
-      width: '140px',
-      cell: (row) => `₹${row.totalSaleProfit}`,
     },
     {
       key: 'status',
@@ -438,7 +438,6 @@ export const Sales = () => {
                 <tr><td className="px-4 py-2 font-semibold text-text-secondary">Purchase Price</td><td className="px-4 py-2 text-secondary">₹{viewing.purchasePrice}</td></tr>
                 <tr><td className="px-4 py-2 font-semibold text-text-secondary">Total</td><td className="px-4 py-2 text-secondary">₹{viewing.total}</td></tr>
                 <tr><td className="px-4 py-2 font-semibold text-text-secondary">Per Sale Profit</td><td className="px-4 py-2 text-secondary">₹{viewing.perSaleProfit}</td></tr>
-                <tr><td className="px-4 py-2 font-semibold text-text-secondary">Total Sale Profit</td><td className="px-4 py-2 text-secondary">₹{viewing.totalSaleProfit}</td></tr>
                 <tr><td className="px-4 py-2 font-semibold text-text-secondary">Status</td><td className="px-4 py-2 text-secondary">{viewing.status ? 'Active' : 'Inactive'}</td></tr>
               </tbody>
             </table>

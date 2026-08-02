@@ -158,6 +158,12 @@ export const PartyMaster = () => {
     { key: 'city', header: 'City' },
     { key: 'state', header: 'State' },
     {
+      key: 'sales_profit',
+      header: 'Party Profit',
+      width: '140px',
+      cell: (row) => `₹${row.sales_profit}`,
+    },
+    {
       key: 'status',
       header: 'Status',
       width: '100px',
@@ -265,6 +271,7 @@ export const PartyMaster = () => {
                 <tr><td className="px-4 py-2 font-semibold text-text-secondary">State</td><td className="px-4 py-2 text-secondary">{viewing.state}</td></tr>
                 <tr><td className="px-4 py-2 font-semibold text-text-secondary">Country</td><td className="px-4 py-2 text-secondary">{viewing.country}</td></tr>
                 <tr><td className="px-4 py-2 font-semibold text-text-secondary">Pincode</td><td className="px-4 py-2 text-secondary">{viewing.pincode}</td></tr>
+                <tr><td className="px-4 py-2 font-semibold text-text-secondary">Party Profit</td><td className="px-4 py-2 text-secondary">{viewing.sales_profit}</td></tr>
                 <tr><td className="px-4 py-2 font-semibold text-text-secondary">Status</td><td className="px-4 py-2 text-secondary">{viewing.status ? 'Active' : 'Inactive'}</td></tr>
               </tbody>
             </table>

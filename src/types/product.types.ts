@@ -66,6 +66,7 @@ export interface Party {
   state: string
   country: string
   pincode: string
+  sales_profit: number
   status: boolean
   createdAt: string
   updatedAt: string
@@ -151,7 +152,6 @@ export interface Sale {
   purchasePrice: number
   total: number
   perSaleProfit: number
-  totalSaleProfit: number
   status: boolean
   createdAt: string
   updatedAt: string

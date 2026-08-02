@@ -1,7 +1,7 @@
 import type { ApiError } from '../types/auth.types'
 import type { Party, PartyListResponse } from '../types/product.types'
 
-type PartyPayload = Omit<Party, 'id' | 'companyId' | 'createdAt' | 'updatedAt'>
+type PartyPayload = Omit<Party, 'id' | 'companyId' | 'sales_profit' | 'createdAt' | 'updatedAt'>
 type PartyMutationResponse = { message: string; party: Party }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
