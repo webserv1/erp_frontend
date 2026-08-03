@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { AlertTriangle, Package, Receipt, Store, ShoppingCart, TrendingUp, Users } from 'lucide-react'
 import { StatCard } from '../../components/cards'
-import { useToast } from '../../components/ui'
+import { Card, useToast } from '../../components/ui'
 import { useAuth } from '../../hooks/useAuth'
 import { dashboardApi, type DashboardData } from '../../services/dashboard.api'
 
@@ -56,6 +56,7 @@ export const Dashboard = () => {
   const formattedTime = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })
 
   const isAdmin = user?.role.name === 'ADMIN'
+  const currency = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })
 
   const getCardValue = (key: string): number | string => {
     if (!dashboard) return 0
@@ -102,6 +103,35 @@ export const Dashboard = () => {
             />
           ))}
       </div>
+
+      <Card className="mt-6 w-full max-w-2xl overflow-hidden">
+        <div className="flex items-center gap-3 border-b border-border-gold px-4 py-3">
+          <span className="rounded-lg bg-primary-light p-2 text-primary-dark"><Receipt size={18} /></span>
+          <div>
+            <h3 className="text-base font-bold text-secondary">Last Party Purchases</h3>
+            <p className="text-xs text-text-secondary">Recent purchases by party</p>
+          </div>
+        </div>
+        {loading ? (
+          <p className="px-4 py-5 text-sm text-text-secondary">Loading purchases...</p>
+        ) : dashboard?.lastPartyPurchases.length ? (
+          <div className="divide-y divide-border-gold">
+            {dashboard.lastPartyPurchases.map((purchase) => (
+              <div key={purchase.id} className="flex items-center justify-between gap-4 px-4 py-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-secondary">{purchase.partyName}</p>
+                  <p className="mt-0.5 text-xs text-text-secondary">
+                    #{purchase.purchaseNumber} · {new Date(purchase.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                  </p>
+                </div>
+                <p className="shrink-0 text-sm font-bold text-primary-dark">{currency.format(purchase.grandTotal)}</p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="px-4 py-5 text-sm text-text-secondary">No party purchases yet.</p>
+        )}
+      </Card>
 
       <div className="fixed bottom-4 right-5 rounded-lg border border-border-gold bg-white/90 px-3 py-1.5 text-right text-xs text-text-secondary shadow-sm backdrop-blur">
         <span className="font-medium text-secondary">{formattedDate}</span>

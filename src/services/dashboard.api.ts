@@ -37,6 +37,15 @@ export interface LowStockAlert {
   salePrice: number
 }
 
+export interface LastPartyPurchase {
+  id: number
+  purchaseNumber: string
+  grandTotal: number
+  createdAt: string
+  partyId: number
+  partyName: string
+}
+
 export interface DashboardData {
   totalProducts: number
   totalSuppliers: number
@@ -45,6 +54,7 @@ export interface DashboardData {
   totalSalesProfit: number
   today: TodayData
   lowStockAlerts: LowStockAlert[]
+  lastPartyPurchases: LastPartyPurchase[]
 }
 
 export const dashboardApi = {
