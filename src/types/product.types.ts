@@ -106,7 +106,8 @@ export interface Purchase {
   id: number
   companyId: number
   purchaseNumber: string
-  supplierId: number
+  partyId: number
+  partyName: string
   createdById?: number
   invoiceDate: string
   dueDate: string
@@ -120,7 +121,7 @@ export interface Purchase {
   status: boolean
   createdAt: string
   updatedAt: string
-  supplier?: { id: number; name: string; mobile: string }
+  party?: { id: number; partyName: string; mobile: string }
   createdBy?: { id: number; name: string }
 }
 

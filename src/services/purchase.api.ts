@@ -42,10 +42,10 @@ const normalizePurchaseList = (data: Record<string, unknown>): PurchaseListRespo
 }
 
 export const purchaseApi = {
-  list: (params?: { search?: string; supplierId?: number; paymentStatus?: string; startDate?: string; endDate?: string; status?: boolean; page?: number; limit?: number }) => {
+  list: (params?: { search?: string; partyId?: number; paymentStatus?: string; startDate?: string; endDate?: string; status?: boolean; page?: number; limit?: number }) => {
     const query = new URLSearchParams()
     if (params?.search) query.append('search', params.search)
-    if (params?.supplierId) query.append('supplierId', String(params.supplierId))
+    if (params?.partyId) query.append('partyId', String(params.partyId))
     if (params?.paymentStatus) query.append('paymentStatus', params.paymentStatus)
     if (params?.startDate) query.append('startDate', params.startDate)
     if (params?.endDate) query.append('endDate', params.endDate)
