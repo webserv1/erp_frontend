@@ -193,3 +193,24 @@ export interface StockListResponse {
   page: number
   limit: number
 }
+
+export interface Expense {
+  id: number
+  companyId: number
+  category: string
+  details: string
+  amount: number
+  paymentMode: 'UPI' | 'CASH'
+  billUrl?: string
+  createdById?: number
+  status: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ExpenseListResponse {
+  expense: Expense[]
+  total: number
+  page: number
+  limit: number
+}

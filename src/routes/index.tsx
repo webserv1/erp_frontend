@@ -16,6 +16,7 @@ import { SupplierMaster } from '../pages/suppliers/SupplierMaster'
 import { PurchaseMaster } from '../pages/purchases/PurchaseMaster'
 import { Sales } from '../pages/sales/Sales'
 import { StockMaster } from '../pages/stock/StockMaster'
+import { ExpenseMaster } from '../pages/expenses/ExpenseMaster'
 
 export const AppRoutes = () => (
   <Routes>
@@ -37,6 +38,7 @@ export const AppRoutes = () => (
         <Route path="/purchases" element={<PurchaseMaster />} />
         <Route path="/sales" element={<Sales />} />
         <Route path="/stock" element={<StockMaster />} />
+        <Route path="/expenses" element={<ExpenseMaster />} />
       </Route>
     </Route>
     <Route path="/" element={<Navigate to="/dashboard" replace />} />
