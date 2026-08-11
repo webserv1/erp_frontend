@@ -348,6 +348,8 @@ export const Sales = () => {
               </Select>
             </FormField>
             <FormField label="Product Name" required><Input required value={form.productName} readOnly placeholder="Auto-filled from product code" /></FormField>
+            <FormField label="Size" required><Input required value={form.sizeName} readOnly placeholder="Auto-filled from product code" /></FormField>
+            <FormField label="Color" required><Input required value={form.colorName} readOnly placeholder="Auto-filled from product code" /></FormField>
             <FormField label="Party" required>
               <Select required value={form.partyId} onChange={(e) => handlePartyChange(e.target.value)}>
                 <option value="">Select party</option>
@@ -365,8 +367,6 @@ export const Sales = () => {
             <FormField label="Supplier Mobile"><Input value={form.supplierMobile} onChange={(e) => setForm({ ...form, supplierMobile: e.target.value })} /></FormField>
             <FormField label="Supplier Email"><Input type="email" value={form.supplierEmail} onChange={(e) => setForm({ ...form, supplierEmail: e.target.value })} /></FormField>
             <FormField label="Supplier Address" className="sm:col-span-2 lg:col-span-4"><Input value={form.supplierAddress} onChange={(e) => setForm({ ...form, supplierAddress: e.target.value })} /></FormField>
-            <FormField label="Size" required><Input required value={form.sizeName} readOnly placeholder="Auto-filled from product code" /></FormField>
-            <FormField label="Color" required><Input required value={form.colorName} readOnly placeholder="Auto-filled from product code" /></FormField>
             <FormField label="Quantity" required>
               <div className="flex gap-2">
                 <Input required type="number" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })} className="flex-1" />
