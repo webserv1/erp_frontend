@@ -214,3 +214,100 @@ export interface ExpenseListResponse {
   page: number
   limit: number
 }
+
+export interface SalesTrend {
+  date: string
+  sales: number
+  profit: number
+}
+
+export interface TopProduct {
+  productCode: string
+  productName: string
+  quantity: number
+  total: number
+}
+
+export interface TopParty {
+  partyId: number
+  partyName: string
+  total: number
+}
+
+export interface LowStockAlertReport {
+  id: number
+  productCode: string
+  productName: string
+  balanceStock: number
+}
+
+export interface ReportData {
+  sales: { count: number; total: number; profit: number }
+  purchases: { count: number; total: number }
+  expenses: { count: number; total: number }
+  netProfit: number
+  salesTrend: SalesTrend[]
+  topProducts: TopProduct[]
+  topParties: TopParty[]
+  lowStockAlerts: LowStockAlertReport[]
+}
+
+export interface Report {
+  id: number
+  companyId: number
+  type: 'WEEKLY' | 'MONTHLY'
+  periodStart: string
+  periodEnd: string
+  data: ReportData
+  generatedById?: number
+  createdAt: string
+  generatedBy?: { id: number; name: string }
+}
+
+export interface ReportListResponse {
+  reports: Report[]
+}
+
+export interface GenerateReportPayload {
+  type: 'WEEKLY' | 'MONTHLY'
+}
+
+export interface Company {
+  id: number
+  name: string
+  address?: string
+  city?: string
+  state?: string
+  country?: string
+  pincode?: string
+  mobile?: string
+  email?: string
+  gst?: string
+  logo?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface Branding {
+  id: number
+  companyId: number
+  primaryColor?: string
+  secondaryColor?: string
+  accentColor?: string
+  logo?: string
+  background?: string
+  favicon?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface User {
+  id: number
+  companyId: number
+  name: string
+  email: string
+  role: 'ADMIN' | 'MANAGER' | 'WORKER'
+  status: boolean
+  createdAt: string
+  updatedAt: string
+}

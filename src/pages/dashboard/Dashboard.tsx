@@ -1,15 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
-import { AlertTriangle, Package, Receipt, Store, ShoppingCart, TrendingUp, Users } from 'lucide-react'
+import { AlertTriangle, Package, Receipt, Store, ShoppingCart, TrendingUp, Users, Wallet } from 'lucide-react'
 import { StatCard } from '../../components/cards'
 import { Card, useToast } from '../../components/ui'
 import { useAuth } from '../../hooks/useAuth'
 import { dashboardApi, type DashboardData } from '../../services/dashboard.api'
+import { expenseApi } from '../../services/expense.api'
 
 const statCards = [
   { label: 'Products', icon: Package, key: 'totalProducts' as const },
   { label: 'Suppliers', icon: Store, key: 'totalSuppliers' as const },
   { label: 'Total Parties', icon: Users, key: 'totalParties' as const },
   { label: 'Total Sales', icon: ShoppingCart, key: 'totalSales' as const, adminOnly: true },
+  { label: 'This Month Expenses', icon: Wallet, key: 'thisMonthExpenses' as const },
   { label: "Today's Purchase", icon: Receipt, key: 'todayPurchaseCount' as const },
   { label: "Today's Sales", icon: TrendingUp, key: 'todaySaleCount' as const },
   { label: 'Low Stock Alert', icon: AlertTriangle, key: 'lowStockCount' as const },
@@ -23,6 +25,7 @@ export const Dashboard = () => {
   const hasWelcomed = useRef(false)
   const [now, setNow] = useState(new Date())
   const [dashboard, setDashboard] = useState<DashboardData | null>(null)
+  const [thisMonthExpenses, setThisMonthExpenses] = useState(0)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -33,13 +36,27 @@ export const Dashboard = () => {
   useEffect(() => {
     let cancelled = false
     const loadDashboard = async () => {
-      try {
-        const data = await dashboardApi.get()
-        if (!cancelled) setDashboard(data)
-      } catch (err) {
-        if (!cancelled) toast({ title: 'Failed to load dashboard', description: (err as Error).message, variant: 'error' })
-      } finally {
-        if (!cancelled) setLoading(false)
+      const [dashboardResult, expenseSummaryResult] = await Promise.allSettled([
+        dashboardApi.get(),
+        expenseApi.getSummary(),
+      ])
+
+      if (cancelled) return
+
+      if (dashboardResult.status === 'fulfilled') {
+        setDashboard(dashboardResult.value)
+      } else {
+        toast({ title: 'Failed to load dashboard', description: (dashboardResult.reason as Error).message, variant: 'error' })
+      }
+
+      if (expenseSummaryResult.status === 'fulfilled') {
+        setThisMonthExpenses(expenseSummaryResult.value.thisMonthTotal)
+      } else {
+        toast({ title: 'Failed to load this month expenses', description: (expenseSummaryResult.reason as Error).message, variant: 'error' })
+      }
+
+      if (!cancelled) {
+        setLoading(false)
       }
     }
     loadDashboard()
@@ -56,6 +73,7 @@ export const Dashboard = () => {
   const formattedTime = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })
 
   const isAdmin = user?.role.name === 'ADMIN'
+  const isSqarsGarments = user?.company?.name.trim().toLocaleLowerCase() === 'sqars garments'
   const currency = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })
 
   const getCardValue = (key: string): number | string => {
@@ -71,6 +89,8 @@ export const Dashboard = () => {
         return dashboard.totalSales
       case 'totalSalesProfit':
         return dashboard.totalSalesProfit
+      case 'thisMonthExpenses':
+        return currency.format(thisMonthExpenses)
       case 'todayPurchaseCount':
         return dashboard.today.purchaseCount
       case 'todaySaleCount':
@@ -85,13 +105,23 @@ export const Dashboard = () => {
   }
 
   return (
-    <>
-      <div className="mb-8">
-        <p className="text-sm font-semibold text-primary-dark">ERP OVERVIEW</p>
+    <div className="relative isolate min-h-full">
+      {isSqarsGarments && (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 z-0 rounded-2xl bg-cover bg-center opacity-45"
+          style={{ backgroundImage: "url('/sqars-dashboard-bg.jpg.jpeg')" }}
+        />
+      )}
+
+      <div className="relative z-10">
+        <div className="mb-8">
+        
         <h2 className="mt-1 text-3xl font-bold text-secondary">Good to see you, {user?.name.split(' ')[0]}.</h2>
         <p className="mt-2 text-text-secondary">Your secure workspace is ready.</p>
-      </div>
-      <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+        </div>
+
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
         {statCards
           .filter((card) => !card.adminOnly || isAdmin)
           .map(({ label, icon, key }) => (
@@ -102,9 +132,9 @@ export const Dashboard = () => {
               value={loading ? '...' : getCardValue(key)}
             />
           ))}
-      </div>
+        </div>
 
-      <Card className="mt-6 w-full max-w-2xl overflow-hidden">
+        <Card className="mt-6 w-full max-w-2xl overflow-hidden">
         <div className="flex items-center gap-3 border-b border-border-gold px-4 py-3">
           <span className="rounded-lg bg-primary-light p-2 text-primary-dark"><Receipt size={18} /></span>
           <div>
@@ -131,13 +161,14 @@ export const Dashboard = () => {
         ) : (
           <p className="px-4 py-5 text-sm text-text-secondary">No party purchases yet.</p>
         )}
-      </Card>
+        </Card>
 
-      <div className="fixed bottom-4 right-5 rounded-lg border border-border-gold bg-white/90 px-3 py-1.5 text-right text-xs text-text-secondary shadow-sm backdrop-blur">
+        <div className="fixed bottom-4 right-5 rounded-lg border border-border-gold bg-white/90 px-3 py-1.5 text-right text-xs text-text-secondary shadow-sm backdrop-blur">
         <span className="font-medium text-secondary">{formattedDate}</span>
         <span className="mx-1.5 text-text-secondary">•</span>
         <span className="font-medium text-secondary">{formattedTime}</span>
+        </div>
       </div>
-    </>
+    </div>
   )
 }

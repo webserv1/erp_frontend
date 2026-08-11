@@ -71,16 +71,16 @@ export const AppSidebar = ({ open, onClose }: { open: boolean; onClose: () => vo
   }
 
   return (
-    <aside className={`fixed inset-y-0 left-0 z-40 flex w-68 flex-col bg-sidebar text-white transition-transform lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${open ? 'translate-x-0' : '-translate-x-full'}`}>
-      <div className="flex h-18 items-center justify-between border-b border-white/10 px-5">
+    <aside className={`fixed inset-y-0 left-0 z-40 flex w-68 flex-col overflow-hidden bg-sidebar text-white transition-transform lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${open ? 'translate-x-0' : '-translate-x-full'}`}>
+      <div className="flex h-18 shrink-0 items-center justify-between border-b border-white/10 px-5">
         <div className="flex items-center gap-3">
           <div className="grid size-9 place-items-center rounded-lg bg-primary text-secondary"><Building2 size={20} /></div>
           <div><p className="font-bold">A-ERP</p><p className="text-xs text-white/60">Operations suite</p></div>
         </div>
         <button onClick={onClose} className="lg:hidden"><X /></button>
       </div>
-      <nav className="flex-1 space-y-1 px-3 py-5">{visibleItems.map((item) => renderItem(item))}</nav>
-      <div className="border-t border-white/10 p-3">
+      <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto px-3 py-5">{visibleItems.map((item) => renderItem(item))}</nav>
+      <div className="shrink-0 border-t border-white/10 p-3">
         <button onClick={signOut} className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-white transition hover:bg-sidebar-hover">
           <LogOut size={19} />
           Sign out

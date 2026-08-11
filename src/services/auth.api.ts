@@ -24,4 +24,5 @@ export const authApi = {
   register: (payload: FormData) => request<{ message: string; loginEmail: string }>('/auth/register', { method: 'POST', body: payload }),
   me: (token: string) => request<{ user: AuthUser }>('/auth/me', { headers: { Authorization: `Bearer ${token}` } }),
   logout: () => request<{ message: string }>('/auth/logout', { method: 'POST' }),
+  changePassword: (payload: { currentPassword: string; newPassword: string }) => request<{ message: string }>('/auth/change-password', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }),
 }
