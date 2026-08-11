@@ -272,7 +272,7 @@ export const Settings = () => {
 
   const tabs = [
     { id: 'company' as SettingsTab, label: 'Company Profile', icon: Building2 },
-    { id: 'users' as SettingsTab, label: 'User Management', icon: Users },
+    ...(user?.role.name === 'ADMIN' ? [{ id: 'users' as SettingsTab, label: 'User Management', icon: Users }] : []),
     // { id: 'theme' as SettingsTab, label: 'Theme Settings', icon: Palette }, // Hidden for now
     ...(user?.role.name === 'ADMIN' ? [{ id: 'password' as SettingsTab, label: 'Change Password', icon: LockKeyhole }] : []),
   ]

@@ -11,10 +11,10 @@ import { useAuth } from '../../hooks/useAuth'
 const formatCurrency = (value: number) => `₹${value.toLocaleString('en-IN')}`
 const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
 
-const SalesTrendChart = ({ data }: { data: ReportData['salesTrend'] }) => {
+const SalesTrendChart = ({ data, showProfit }: { data: ReportData['salesTrend']; showProfit: boolean }) => {
   if (!data || data.length === 0) return <p className="text-sm text-text-secondary">No trend data available.</p>
 
-  const maxValue = Math.max(...data.flatMap((d) => [d.sales, d.profit]), 1)
+  const maxValue = Math.max(...data.flatMap((d) => showProfit ? [d.sales, d.profit] : [d.sales]), 1)
   const width = 800
   const height = 250
   const padding = { top: 20, right: 20, bottom: 40, left: 50 }
@@ -25,7 +25,7 @@ const SalesTrendChart = ({ data }: { data: ReportData['salesTrend'] }) => {
   const getY = (value: number, max: number) => padding.top + chartHeight - (value / max) * chartHeight
 
   const salesPath = data.map((d, i) => `${i === 0 ? 'M' : 'L'} ${getX(i)} ${getY(d.sales, maxValue)}`).join(' ')
-  const profitPath = data.map((d, i) => `${i === 0 ? 'M' : 'L'} ${getX(i)} ${getY(d.profit, maxValue)}`).join(' ')
+  const profitPath = showProfit ? data.map((d, i) => `${i === 0 ? 'M' : 'L'} ${getX(i)} ${getY(d.profit, maxValue)}`).join(' ') : ''
   const labelStep = Math.max(1, Math.ceil(data.length / 8))
 
   return (
@@ -42,11 +42,11 @@ const SalesTrendChart = ({ data }: { data: ReportData['salesTrend'] }) => {
           </g>
         ))}
         <path d={salesPath} fill="none" stroke="#2563eb" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-        <path d={profitPath} fill="none" stroke="#16a34a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="6 4" />
+        {showProfit && <path d={profitPath} fill="none" stroke="#16a34a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="6 4" />}
         {data.map((d, i) => (
           <circle key={i} cx={getX(i)} cy={getY(d.sales, maxValue)} r="4" fill="#2563eb" />
         ))}
-        {data.map((d, i) => (
+        {showProfit && data.map((d, i) => (
           <circle key={i} cx={getX(i)} cy={getY(d.profit, maxValue)} r="4" fill="#16a34a" />
         ))}
         {data.map((d, i) => (i % labelStep === 0 || i === data.length - 1) && (
@@ -60,10 +60,10 @@ const SalesTrendChart = ({ data }: { data: ReportData['salesTrend'] }) => {
           <span className="h-3 w-3 rounded-full bg-blue-600" />
           Sales
         </div>
-        <div className="flex items-center gap-2 text-sm text-text-secondary">
+        {showProfit && <div className="flex items-center gap-2 text-sm text-text-secondary">
           <span className="h-3 w-3 rounded-full bg-green-600" style={{ border: '2px dashed #16a34a' }} />
           Profit
-        </div>
+        </div>}
       </div>
     </div>
   )
@@ -83,6 +83,7 @@ export const Reports = () => {
   const [submitting, setSubmitting] = useState(false)
 
   const isAdmin = user?.role.name === 'ADMIN'
+  const canManage = user?.role.name === 'ADMIN' || user?.role.name === 'MANAGER'
 
   const loadReports = async () => {
     let cancelled = false
@@ -187,15 +188,15 @@ export const Reports = () => {
             <p className="mt-1 text-xl font-bold text-secondary">{formatCurrency(data.expenses.total)}</p>
             <p className="text-xs text-text-secondary">{data.expenses.count} records</p>
           </Card>
-          <Card className="p-4">
+          {isAdmin && <Card className="p-4">
             <p className="text-sm text-text-secondary">Net Profit</p>
             <p className={`mt-1 text-xl font-bold ${data.netProfit >= 0 ? 'text-green-700' : 'text-red-700'}`}>{formatCurrency(data.netProfit)}</p>
-          </Card>
+          </Card>}
         </div>
 
         <Card className="p-6">
-          <h3 className="mb-4 text-lg font-semibold text-secondary">Sales & Profit Overview</h3>
-          <SalesTrendChart data={data.salesTrend} />
+          <h3 className="mb-4 text-lg font-semibold text-secondary">{isAdmin ? 'Sales & Profit Overview' : 'Sales Overview'}</h3>
+          <SalesTrendChart data={data.salesTrend} showProfit={isAdmin} />
         </Card>
 
         <div className="grid gap-6 lg:grid-cols-3">
@@ -271,7 +272,7 @@ export const Reports = () => {
             <p className="text-sm text-text-secondary">Generate and view weekly/monthly business reports</p>
           </div>
         </div>
-        {isAdmin && (
+        {canManage && (
           <Button onClick={openGenerateModal}>
             <Plus size={18} className="mr-2" />
             Generate Report

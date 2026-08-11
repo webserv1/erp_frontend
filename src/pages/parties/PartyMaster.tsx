@@ -7,6 +7,7 @@ import { FormField, Input, Select } from '../../components/forms'
 import { DataTable, type DataTableColumn, type DataTableAction } from '../../components/table'
 import { partyApi } from '../../services/party.api'
 import type { Party } from '../../types/product.types'
+import { useAuth } from '../../hooks/useAuth'
 
 type FormState = {
   partyName: string
@@ -37,6 +38,8 @@ const emptyForm: FormState = {
 export const PartyMaster = () => {
   const navigate = useNavigate()
   const { toast } = useToast()
+  const { user } = useAuth()
+  const isAdmin = user?.role.name === 'ADMIN'
 
   const [form, setForm] = useState<FormState>(emptyForm)
   const [editing, setEditing] = useState<Party | null>(null)
@@ -241,7 +244,7 @@ export const PartyMaster = () => {
       </Card>
 
       <DataTable
-        columns={columns}
+        columns={isAdmin ? columns : columns.filter((column) => column.key !== 'sales_profit')}
         rows={paginatedItems}
         rowKey={(row) => row.id}
         actions={actions}
@@ -271,7 +274,7 @@ export const PartyMaster = () => {
                 <tr><td className="px-4 py-2 font-semibold text-text-secondary">State</td><td className="px-4 py-2 text-secondary">{viewing.state}</td></tr>
                 <tr><td className="px-4 py-2 font-semibold text-text-secondary">Country</td><td className="px-4 py-2 text-secondary">{viewing.country}</td></tr>
                 <tr><td className="px-4 py-2 font-semibold text-text-secondary">Pincode</td><td className="px-4 py-2 text-secondary">{viewing.pincode}</td></tr>
-                <tr><td className="px-4 py-2 font-semibold text-text-secondary">Party Profit</td><td className="px-4 py-2 text-secondary">{viewing.sales_profit}</td></tr>
+                {isAdmin && <tr><td className="px-4 py-2 font-semibold text-text-secondary">Party Profit</td><td className="px-4 py-2 text-secondary">{viewing.sales_profit}</td></tr>}
                 <tr><td className="px-4 py-2 font-semibold text-text-secondary">Status</td><td className="px-4 py-2 text-secondary">{viewing.status ? 'Active' : 'Inactive'}</td></tr>
               </tbody>
             </table>
