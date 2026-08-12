@@ -3,7 +3,7 @@ import type { FormEvent } from 'react'
 import { ArrowLeft, ImagePlus, Search, X } from 'lucide-react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useToast, Button, Card } from '../../components/ui'
-import { FormField, Input, MultiSelect } from '../../components/forms'
+import { FormField, Input, MultiSelect, Select } from '../../components/forms'
 import { DataTable, type DataTableColumn, type DataTableAction } from '../../components/table'
 import { productApi } from '../../services/product.api'
 import type { Product } from '../../types/product.types'
@@ -12,10 +12,10 @@ import type { Brand, Category, Color, Size } from '../../types/product.types'
 type FormState = {
   productCode: string
   productName: string
-  categoryIds: (number | string)[]
-  brandIds: (number | string)[]
-  colorIds: (number | string)[]
-  sizeIds: (number | string)[]
+  categoryId: string
+  brandIds: number[]
+  colorIds: number[]
+  sizeIds: number[]
   gst: string
   itemCode: string
   status: boolean
@@ -24,7 +24,7 @@ type FormState = {
 const emptyForm: FormState = {
   productCode: '',
   productName: '',
-  categoryIds: [],
+  categoryId: '',
   brandIds: [],
   colorIds: [],
   sizeIds: [],
@@ -57,37 +57,17 @@ export const Products = () => {
 
   const [productCodeError, setProductCodeError] = useState('')
 
-  const [pendingBrands, setPendingBrands] = useState<string[]>([])
-  const [pendingColors, setPendingColors] = useState<string[]>([])
-  const [pendingSizes, setPendingSizes] = useState<string[]>([])
-
-  const brandOptions = [
-    ...Object.values(categories.reduce<Record<number, Brand>>((acc, c) => {
-      c.brands.forEach((b) => { acc[b.id] = b })
-      return acc
-    }, {})),
-    ...pendingBrands.map((name, idx) => ({ id: `pending-brand-${idx}`, name })),
-  ]
-  const colorOptions = [
-    ...Object.values(categories.reduce<Record<number, Color>>((acc, c) => {
-      c.colors.forEach((clr) => { acc[clr.id] = clr })
-      return acc
-    }, {})),
-    ...pendingColors.map((name, idx) => ({ id: `pending-color-${idx}`, name })),
-  ]
-  const sizeOptions = [
-    ...Object.values(categories.reduce<Record<number, Size>>((acc, c) => {
-      c.sizes.forEach((s) => { acc[s.id] = s })
-      return acc
-    }, {})),
-    ...pendingSizes.map((name, idx) => ({ id: `pending-size-${idx}`, name })),
-  ]
+  const selectedCategory = categories.find((category) => category.id === Number(form.categoryId))
+  const brandOptions: Brand[] = selectedCategory?.brands ?? []
+  const colorOptions: Color[] = selectedCategory?.colors ?? []
+  const sizeOptions: Size[] = selectedCategory?.sizes ?? []
 
   const location = useLocation()
 
   useEffect(() => {
     let cancelled = false
     const loadMasters = async () => {
+      setRefreshingMasters(true)
       try {
         const data = await productApi.categories.list()
         if (!cancelled) {
@@ -105,7 +85,7 @@ export const Products = () => {
         const data = await productApi.products.list({ search: search || undefined })
         if (!cancelled) {
           setItems(data.products)
-          setTotal(data.total)
+          setTotal(data.total ?? data.products.length)
         }
       } catch (err) {
         if (!cancelled) toast({ title: 'Failed to load products', description: (err as Error).message, variant: 'error' })
@@ -114,7 +94,6 @@ export const Products = () => {
       }
     }
 
-    setRefreshingMasters(true)
     loadMasters()
     loadProducts()
     return () => { cancelled = true }
@@ -142,9 +121,6 @@ export const Products = () => {
     setImageFile(null)
     setImagePreview('')
     setProductCodeError('')
-    setPendingBrands([])
-    setPendingColors([])
-    setPendingSizes([])
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
@@ -194,24 +170,25 @@ export const Products = () => {
     setForm({
       productCode: row.productCode,
       productName: row.productName,
-      categoryIds: [row.categoryId],
-      brandIds: [row.brandId],
-      colorIds: [row.colorId],
-      sizeIds: [row.sizeId],
+      categoryId: String(row.categoryId),
+      brandIds: row.brandIds,
+      colorIds: row.colorIds,
+      sizeIds: row.sizeIds,
       gst: row.gst,
       itemCode: row.itemCode,
       status: row.status,
     })
     setImageFile(null)
     setImagePreview(row.productImage || '')
-    setPendingBrands([])
-    setPendingColors([])
-    setPendingSizes([])
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (!form.brandIds.length || !form.colorIds.length || !form.sizeIds.length) {
+      toast({ title: 'Select at least one brand, color, and size', variant: 'error' })
+      return
+    }
     if (!validateProductCode(form.productCode, editing?.id)) {
       toast({ title: 'Invalid product code', variant: 'error' })
       return
@@ -220,14 +197,10 @@ export const Products = () => {
       const fd = new FormData()
       fd.append('productCode', form.productCode)
       fd.append('productName', form.productName)
-      const realCategoryIds = form.categoryIds.filter((id) => typeof id === 'number')
-      const realBrandIds = form.brandIds.filter((id) => typeof id === 'number')
-      const realColorIds = form.colorIds.filter((id) => typeof id === 'number')
-      const realSizeIds = form.sizeIds.filter((id) => typeof id === 'number')
-      realCategoryIds.forEach((id) => fd.append('categoryId', String(id)))
-      realBrandIds.forEach((id) => fd.append('brandId', String(id)))
-      realColorIds.forEach((id) => fd.append('colorId', String(id)))
-      realSizeIds.forEach((id) => fd.append('sizeId', String(id)))
+      fd.append('categoryId', form.categoryId)
+      form.brandIds.forEach((id) => fd.append('brandIds', String(id)))
+      form.colorIds.forEach((id) => fd.append('colorIds', String(id)))
+      form.sizeIds.forEach((id) => fd.append('sizeIds', String(id)))
       fd.append('gst', form.gst)
       fd.append('itemCode', form.itemCode)
       fd.append('status', String(form.status))
@@ -236,25 +209,20 @@ export const Products = () => {
       }
 
       if (editing) {
-        await productApi.products.update(editing.id, fd)
+        const { product } = await productApi.products.update(editing.id, fd)
+        setItems((current) => current.map((item) => item.id === product.id ? product : item))
         toast({ title: 'Product updated', variant: 'success' })
       } else {
-        await productApi.products.create(fd)
+        const { product } = await productApi.products.create(fd)
+        setItems((current) => [product, ...current])
+        setTotal((current) => current + 1)
+        setPage(1)
         toast({ title: 'Product created', variant: 'success' })
       }
       resetForm()
-      const data = await productApi.products.list()
-      setItems(data.products)
-      setTotal(data.total)
     } catch (err) {
       toast({ title: editing ? 'Update failed' : 'Creation failed', description: (err as Error).message, variant: 'error' })
     }
-  }
-
-  const addPendingItem = (type: 'pendingBrands' | 'pendingColors' | 'pendingSizes') => (name: string) => {
-    if (type === 'pendingBrands') setPendingBrands((prev) => [...prev, name])
-    if (type === 'pendingColors') setPendingColors((prev) => [...prev, name])
-    if (type === 'pendingSizes') setPendingSizes((prev) => [...prev, name])
   }
 
   const remove = async (row: Product) => {
@@ -263,7 +231,7 @@ export const Products = () => {
       toast({ title: 'Product deleted', variant: 'success' })
       const data = await productApi.products.list()
       setItems(data.products)
-      setTotal(data.products.length)
+      setTotal(data.total ?? data.products.length)
     } catch (err) {
       toast({ title: 'Delete failed', description: (err as Error).message, variant: 'error' })
     }
@@ -277,7 +245,7 @@ export const Products = () => {
       toast({ title: `Product ${!row.status ? 'activated' : 'deactivated'}`, variant: 'success' })
       const data = await productApi.products.list()
       setItems(data.products)
-      setTotal(data.products.length)
+      setTotal(data.total ?? data.products.length)
     } catch (err) {
       toast({ title: 'Status update failed', description: (err as Error).message, variant: 'error' })
     }
@@ -309,17 +277,26 @@ export const Products = () => {
     {
       key: 'brand',
       header: 'Brand',
+      /* The legacy single-value cell is retained below for migration compatibility.
       cell: (row) => row.brand?.name || '—',
+      */
+      cell: (row) => row.brands.map((brand) => <span key={brand.id} className="block">{brand.name}</span>),
     },
     {
       key: 'color',
       header: 'Color',
+      /* The legacy single-value cell is retained below for migration compatibility.
       cell: (row) => row.color?.name || '—',
+      */
+      cell: (row) => row.colors.map((color) => <span key={color.id} className="block">{color.name}</span>),
     },
     {
       key: 'size',
       header: 'Size',
+      /* The legacy single-value cell is retained below for migration compatibility.
       cell: (row) => row.size?.name || '—',
+      */
+      cell: (row) => row.sizes.map((size) => <span key={size.id} className="block">{size.name}</span>),
     },
     { key: 'gst', header: 'GST', width: '80px' },
     { key: 'itemCode', header: 'Item Code', width: '120px' },
@@ -360,27 +337,27 @@ export const Products = () => {
       <Card className="mb-6 p-6">
         <form id="product-form" onSubmit={submit} className="space-y-5">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <FormField label="Product Code" required error={productCodeError}><Input required value={form.productCode} onChange={(e) => handleProductCodeChange(e.target.value)} /></FormField>
+            <FormField label="Product Code" required error={productCodeError}>
+              <Input required value={form.productCode} onChange={(e) => handleProductCodeChange(e.target.value)} placeholder="e.g. ABC_00001" />
+            </FormField>
             <FormField label="Product Name" required><Input required value={form.productName} onChange={(e) => setForm({ ...form, productName: e.target.value })} /></FormField>
             <FormField label="GST"><Input value={form.gst} onChange={(e) => setForm({ ...form, gst: e.target.value })} placeholder="e.g. 18%" /></FormField>
             <FormField label="Item Code"><Input value={form.itemCode} onChange={(e) => setForm({ ...form, itemCode: e.target.value })} /></FormField>
 
             <FormField label="Category" required>
-              <MultiSelect
-                options={categories}
-                value={form.categoryIds}
-                onChange={(categoryIds) => setForm({ ...form, categoryIds })}
-                placeholder="Select categories"
-              />
+              <Select required value={form.categoryId} onChange={(e) => setForm({ ...form, categoryId: e.target.value, brandIds: [], colorIds: [], sizeIds: [] })}>
+                <option value="">Select category</option>
+                {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </Select>
             </FormField>
 
             <FormField label="Brand" required>
               <MultiSelect
                 options={brandOptions}
                 value={form.brandIds}
-                onChange={(brandIds) => setForm({ ...form, brandIds })}
-                onAddNew={addPendingItem('pendingBrands')}
-                placeholder="Select brands"
+                onChange={(value) => setForm({ ...form, brandIds: value.map(Number) })}
+                placeholder="Select one or more brands"
+                disabled={!form.categoryId}
               />
             </FormField>
 
@@ -388,9 +365,9 @@ export const Products = () => {
               <MultiSelect
                 options={colorOptions}
                 value={form.colorIds}
-                onChange={(colorIds) => setForm({ ...form, colorIds })}
-                onAddNew={addPendingItem('pendingColors')}
-                placeholder="Select colors"
+                onChange={(value) => setForm({ ...form, colorIds: value.map(Number) })}
+                placeholder="Select one or more colors"
+                disabled={!form.categoryId}
               />
             </FormField>
 
@@ -398,9 +375,9 @@ export const Products = () => {
               <MultiSelect
                 options={sizeOptions}
                 value={form.sizeIds}
-                onChange={(sizeIds) => setForm({ ...form, sizeIds })}
-                onAddNew={addPendingItem('pendingSizes')}
-                placeholder="Select sizes"
+                onChange={(value) => setForm({ ...form, sizeIds: value.map(Number) })}
+                placeholder="Select one or more sizes"
+                disabled={!form.categoryId}
               />
             </FormField>
           </div>
@@ -461,7 +438,6 @@ export const Products = () => {
           onLimitChange: (newLimit) => { setLimit(newLimit); setPage(1) },
         }}
       />
-
     </>
   )
 }

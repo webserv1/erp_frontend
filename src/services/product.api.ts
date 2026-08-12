@@ -1,5 +1,5 @@
 import type { ApiError } from '../types/auth.types'
-import type { Brand, Category, Color, Product, ProductListResponse, Size } from '../types/product.types'
+import type { Brand, Category, Color, Product, ProductCreateResponse, ProductListResponse, ProductUpdateResponse, Size } from '../types/product.types'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 
@@ -45,8 +45,8 @@ export const productApi = {
       return request<ProductListResponse>(`/products${qs ? `?${qs}` : ''}`)
     },
     get: (id: number) => request<{ product: Product }>(`/products/${id}`).then((res) => res.product),
-    create: (formData: FormData) => request<Product>('/products', { method: 'POST', body: formData }),
-    update: (id: number, formData: FormData) => request<Product>(`/products/${id}`, { method: 'PUT', body: formData }),
+    create: (formData: FormData) => request<ProductCreateResponse>('/products', { method: 'POST', body: formData }),
+    update: (id: number, formData: FormData) => request<ProductUpdateResponse>(`/products/${id}`, { method: 'PUT', body: formData }),
     remove: (id: number) => request<{ message: string }>(`/products/${id}`, { method: 'DELETE' }),
   },
   categories: {

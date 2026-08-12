@@ -6,16 +6,18 @@ import { useToast, Button, Card, Modal } from '../../components/ui'
 import { FormField, Input, Select } from '../../components/forms'
 import { DataTable, type DataTableColumn, type DataTableAction } from '../../components/table'
 import { purchaseApi } from '../../services/purchase.api'
-import { partyApi } from '../../services/party.api'
-import type { Purchase, Party } from '../../types/product.types'
+import { supplierApi } from '../../services/supplier.api'
+import { productApi } from '../../services/product.api'
+import type { Purchase, Supplier, Product } from '../../types/product.types'
 
 type PaymentStatus = Purchase['paymentStatus']
 
 type FormState = {
   purchaseNumber: string
-  partyId: string
+  supplierId: string
+  supplierName: string
+  productCode: string
   invoiceDate: string
-  dueDate: string
   subTotal: string
   gstAmount: string
   discount: string
@@ -28,9 +30,10 @@ type FormState = {
 
 const emptyForm: FormState = {
   purchaseNumber: '',
-  partyId: '',
+  supplierId: '',
+  supplierName: '',
+  productCode: '',
   invoiceDate: '',
-  dueDate: '',
   subTotal: '0',
   gstAmount: '0',
   discount: '0',
@@ -50,7 +53,8 @@ export const PurchaseMaster = () => {
   const [viewing, setViewing] = useState<Purchase | null>(null)
 
   const [items, setItems] = useState<Purchase[]>([])
-  const [parties, setParties] = useState<Party[]>([])
+  const [suppliers, setSuppliers] = useState<Supplier[]>([])
+  const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
   const [limit, setLimit] = useState(5)
@@ -58,19 +62,34 @@ export const PurchaseMaster = () => {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [paymentStatusFilter, setPaymentStatusFilter] = useState('')
-  const [partyFilter, setPartyFilter] = useState('')
+  const [supplierFilter, setSupplierFilter] = useState('')
+  const [productCodeManual, setProductCodeManual] = useState(false)
 
   useEffect(() => {
     let cancelled = false
-    const loadParties = async () => {
+    const loadSuppliers = async () => {
       try {
-        const data = await partyApi.list()
-        if (!cancelled) setParties(data.party)
+        const data = await supplierApi.list()
+        if (!cancelled) setSuppliers(data.supplier)
       } catch {
-        if (!cancelled) toast({ title: 'Failed to load parties', variant: 'error' })
+        if (!cancelled) toast({ title: 'Failed to load suppliers', variant: 'error' })
       }
     }
-    loadParties()
+    loadSuppliers()
+    return () => { cancelled = true }
+  }, [toast])
+
+  useEffect(() => {
+    let cancelled = false
+    const loadProducts = async () => {
+      try {
+        const data = await productApi.products.list({ limit: 100 })
+        if (!cancelled) setProducts(data.products)
+      } catch {
+        if (!cancelled) toast({ title: 'Failed to load products', variant: 'error' })
+      }
+    }
+    loadProducts()
     return () => { cancelled = true }
   }, [toast])
 
@@ -80,7 +99,7 @@ export const PurchaseMaster = () => {
       try {
         const data = await purchaseApi.list({
           search: search || undefined,
-          partyId: partyFilter ? Number(partyFilter) : undefined,
+          supplierId: supplierFilter ? Number(supplierFilter) : undefined,
           paymentStatus: paymentStatusFilter || undefined,
           status: statusFilter === 'ACTIVE' ? true : statusFilter === 'INACTIVE' ? false : undefined,
           page,
@@ -98,11 +117,12 @@ export const PurchaseMaster = () => {
     }
     loadPurchases()
     return () => { cancelled = true }
-  }, [search, partyFilter, paymentStatusFilter, statusFilter, page, limit, toast])
+  }, [search, supplierFilter, paymentStatusFilter, statusFilter, page, limit, toast])
 
   const resetForm = () => {
     setForm(emptyForm)
     setEditing(null)
+    setProductCodeManual(false)
   }
 
   const openCreate = () => {
@@ -114,9 +134,10 @@ export const PurchaseMaster = () => {
     setEditing(row)
     setForm({
       purchaseNumber: row.purchaseNumber,
-      partyId: String(row.partyId),
+      supplierId: String(row.supplierId),
+      supplierName: row.supplierName,
+      productCode: row.productCode,
       invoiceDate: row.invoiceDate.split('T')[0],
-      dueDate: row.dueDate.split('T')[0],
       subTotal: String(row.subTotal),
       gstAmount: String(row.gstAmount),
       discount: String(row.discount),
@@ -138,10 +159,10 @@ export const PurchaseMaster = () => {
     try {
       const payload = {
         purchaseNumber: form.purchaseNumber,
-        partyId: Number(form.partyId),
-        partyName: parties.find((p) => String(p.id) === form.partyId)?.partyName || '',
+        supplierId: Number(form.supplierId),
+        supplierName: form.supplierName,
+        productCode: form.productCode,
         invoiceDate: form.invoiceDate,
-        dueDate: form.dueDate,
         subTotal: Number(form.subTotal) || 0,
         gstAmount: Number(form.gstAmount) || 0,
         discount: Number(form.discount) || 0,
@@ -163,7 +184,7 @@ export const PurchaseMaster = () => {
       setPage(1)
       const data = await purchaseApi.list({
         search: search || undefined,
-        partyId: partyFilter ? Number(partyFilter) : undefined,
+        supplierId: supplierFilter ? Number(supplierFilter) : undefined,
         paymentStatus: paymentStatusFilter || undefined,
         status: statusFilter === 'ACTIVE' ? true : statusFilter === 'INACTIVE' ? false : undefined,
         page: 1,
@@ -182,7 +203,7 @@ export const PurchaseMaster = () => {
       toast({ title: 'Purchase deleted', variant: 'success' })
       const data = await purchaseApi.list({
         search: search || undefined,
-        partyId: partyFilter ? Number(partyFilter) : undefined,
+        supplierId: supplierFilter ? Number(supplierFilter) : undefined,
         paymentStatus: paymentStatusFilter || undefined,
         status: statusFilter === 'ACTIVE' ? true : statusFilter === 'INACTIVE' ? false : undefined,
         page: page > 1 ? page - 1 : 1,
@@ -198,23 +219,26 @@ export const PurchaseMaster = () => {
 
   const totalPages = Math.max(1, Math.ceil(total / limit))
   const paginatedItems = items.slice((page - 1) * limit, page * limit)
-  const getPartyName = (purchase: Purchase) =>
-    purchase.partyName ||
-    purchase.party?.partyName ||
-    parties.find((party) => party.id === purchase.partyId)?.partyName ||
+
+  const getSupplierName = (purchase: Purchase) =>
+    purchase.supplierName ||
+    purchase.supplier?.name ||
+    suppliers.find((s) => s.id === purchase.supplierId)?.name ||
     '—'
+
   const displayItems = paginatedItems.map((purchase) => ({
     ...purchase,
-    partyName: getPartyName(purchase),
+    supplierName: getSupplierName(purchase),
   }))
 
   const columns: DataTableColumn<Purchase>[] = [
     { key: 'purchaseNumber', header: 'Purchase No', width: '120px' },
-    { key: 'partyName', header: 'Party', cell: (row) => row.partyName || row.party?.partyName || '—' },
+    { key: 'supplierName', header: 'Supplier', cell: (row) => row.supplierName || row.supplier?.name || '—' },
+    { key: 'productCode', header: 'Product Code', width: '120px' },
     { key: 'invoiceDate', header: 'Invoice Date', width: '120px', cell: (row) => row.invoiceDate.split('T')[0] },
-    { key: 'dueDate', header: 'Due Date', width: '120px', cell: (row) => row.dueDate.split('T')[0] },
     { key: 'grandTotal', header: 'Grand Total', width: '120px', cell: (row) => `₹${row.grandTotal}` },
     { key: 'paidAmount', header: 'Paid Amount', width: '120px', cell: (row) => `₹${row.paidAmount}` },
+    { key: 'remainingBalance', header: 'Remaining', width: '120px', cell: (row) => `₹${row.remainingBalance}` },
     {
       key: 'paymentStatus',
       header: 'Payment Status',
@@ -264,14 +288,32 @@ export const PurchaseMaster = () => {
         <form id="purchase-form" onSubmit={submit} className="space-y-5">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <FormField label="Purchase Number" required><Input required value={form.purchaseNumber} onChange={(e) => setForm({ ...form, purchaseNumber: e.target.value })} /></FormField>
-            <FormField label="Party" required>
-              <Select required value={form.partyId} onChange={(e) => setForm({ ...form, partyId: e.target.value })}>
-                <option value="">Select party</option>
-                {parties.map((p) => <option key={p.id} value={p.id}>{p.partyName}</option>)}
+            <FormField label="Supplier" required>
+              <Select required value={form.supplierId} onChange={(e) => setForm({ ...form, supplierId: e.target.value })}>
+                <option value="">Select supplier</option>
+                {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
               </Select>
             </FormField>
+            <FormField label="Supplier Name" required><Input required value={form.supplierName} onChange={(e) => setForm({ ...form, supplierName: e.target.value })} /></FormField>
+            <FormField label="Product Code">
+              {productCodeManual ? (
+                <Input value={form.productCode} onChange={(e) => setForm({ ...form, productCode: e.target.value })} placeholder="Enter product code" />
+              ) : (
+                <Select value={form.productCode} onChange={(e) => {
+                  if (e.target.value === '__manual__') {
+                    setProductCodeManual(true)
+                    setForm({ ...form, productCode: '' })
+                  } else {
+                    setForm({ ...form, productCode: e.target.value })
+                  }
+                }}>
+                  <option value="">Select product code</option>
+                  {products.map((p) => <option key={p.id} value={p.productCode}>{p.productCode}</option>)}
+                  <option value="__manual__">Other (Manual Entry)</option>
+                </Select>
+              )}
+            </FormField>
             <FormField label="Invoice Date" required><Input required type="date" value={form.invoiceDate} onChange={(e) => setForm({ ...form, invoiceDate: e.target.value })} /></FormField>
-            <FormField label="Due Date" required><Input required type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} /></FormField>
             <FormField label="Sub Total" required><Input required type="number" value={form.subTotal} onChange={(e) => setForm({ ...form, subTotal: e.target.value })} /></FormField>
             <FormField label="GST Amount" required><Input required type="number" value={form.gstAmount} onChange={(e) => setForm({ ...form, gstAmount: e.target.value })} /></FormField>
             <FormField label="Discount"><Input type="number" value={form.discount} onChange={(e) => setForm({ ...form, discount: e.target.value })} /></FormField>
@@ -306,16 +348,16 @@ export const PurchaseMaster = () => {
           <div className="relative max-w-sm">
             <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
             <Input
-              placeholder="Search by purchase number or remarks"
+              placeholder="Search by purchase number, supplier, product code or remarks"
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1) }}
               className="pl-9"
             />
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <Select value={partyFilter} onChange={(e) => { setPartyFilter(e.target.value); setPage(1) }} className="sm:max-w-40">
-              <option value="">All Parties</option>
-              {parties.map((p) => <option key={p.id} value={p.id}>{p.partyName}</option>)}
+            <Select value={supplierFilter} onChange={(e) => { setSupplierFilter(e.target.value); setPage(1) }} className="sm:max-w-40">
+              <option value="">All Suppliers</option>
+              {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
             </Select>
             <Select value={paymentStatusFilter} onChange={(e) => { setPaymentStatusFilter(e.target.value); setPage(1) }} className="sm:max-w-40">
               <option value="">All Payment Status</option>
@@ -356,14 +398,15 @@ export const PurchaseMaster = () => {
             <table className="w-full text-sm">
               <tbody className="divide-y divide-border-gold">
                 <tr><td className="px-4 py-2 font-semibold text-text-secondary">Purchase Number</td><td className="px-4 py-2 text-secondary">{viewing.purchaseNumber}</td></tr>
-                <tr><td className="px-4 py-2 font-semibold text-text-secondary">Party</td><td className="px-4 py-2 text-secondary">{viewing.party?.partyName || viewing.partyName || '—'}</td></tr>
+                <tr><td className="px-4 py-2 font-semibold text-text-secondary">Supplier</td><td className="px-4 py-2 text-secondary">{viewing.supplier?.name || viewing.supplierName || '—'}</td></tr>
+                <tr><td className="px-4 py-2 font-semibold text-text-secondary">Product Code</td><td className="px-4 py-2 text-secondary">{viewing.productCode || '—'}</td></tr>
                 <tr><td className="px-4 py-2 font-semibold text-text-secondary">Invoice Date</td><td className="px-4 py-2 text-secondary">{viewing.invoiceDate.split('T')[0]}</td></tr>
-                <tr><td className="px-4 py-2 font-semibold text-text-secondary">Due Date</td><td className="px-4 py-2 text-secondary">{viewing.dueDate.split('T')[0]}</td></tr>
                 <tr><td className="px-4 py-2 font-semibold text-text-secondary">Sub Total</td><td className="px-4 py-2 text-secondary">₹{viewing.subTotal}</td></tr>
                 <tr><td className="px-4 py-2 font-semibold text-text-secondary">GST Amount</td><td className="px-4 py-2 text-secondary">₹{viewing.gstAmount}</td></tr>
                 <tr><td className="px-4 py-2 font-semibold text-text-secondary">Discount</td><td className="px-4 py-2 text-secondary">₹{viewing.discount}</td></tr>
                 <tr><td className="px-4 py-2 font-semibold text-text-secondary">Grand Total</td><td className="px-4 py-2 text-secondary">₹{viewing.grandTotal}</td></tr>
                 <tr><td className="px-4 py-2 font-semibold text-text-secondary">Paid Amount</td><td className="px-4 py-2 text-secondary">₹{viewing.paidAmount}</td></tr>
+                <tr><td className="px-4 py-2 font-semibold text-text-secondary">Remaining Balance</td><td className="px-4 py-2 text-secondary">₹{viewing.remainingBalance}</td></tr>
                 <tr><td className="px-4 py-2 font-semibold text-text-secondary">Payment Status</td><td className="px-4 py-2 text-secondary">{viewing.paymentStatus}</td></tr>
                 <tr><td className="px-4 py-2 font-semibold text-text-secondary">Remarks</td><td className="px-4 py-2 text-secondary">{viewing.remarks || '—'}</td></tr>
                 <tr><td className="px-4 py-2 font-semibold text-text-secondary">Status</td><td className="px-4 py-2 text-secondary">{viewing.status ? 'Active' : 'Inactive'}</td></tr>

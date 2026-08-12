@@ -1,7 +1,7 @@
 import type { ApiError } from '../types/auth.types'
 import type { Purchase, PurchaseListResponse } from '../types/product.types'
 
-type PurchasePayload = Omit<Purchase, 'id' | 'companyId' | 'createdById' | 'createdAt' | 'updatedAt'>
+type PurchasePayload = Omit<Purchase, 'id' | 'companyId' | 'createdById' | 'createdAt' | 'updatedAt' | 'remainingBalance'>
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 
@@ -42,10 +42,10 @@ const normalizePurchaseList = (data: Record<string, unknown>): PurchaseListRespo
 }
 
 export const purchaseApi = {
-  list: (params?: { search?: string; partyId?: number; paymentStatus?: string; startDate?: string; endDate?: string; status?: boolean; page?: number; limit?: number }) => {
+  list: (params?: { search?: string; supplierId?: number; paymentStatus?: string; startDate?: string; endDate?: string; status?: boolean; page?: number; limit?: number }) => {
     const query = new URLSearchParams()
     if (params?.search) query.append('search', params.search)
-    if (params?.partyId) query.append('partyId', String(params.partyId))
+    if (params?.supplierId) query.append('supplierId', String(params.supplierId))
     if (params?.paymentStatus) query.append('paymentStatus', params.paymentStatus)
     if (params?.startDate) query.append('startDate', params.startDate)
     if (params?.endDate) query.append('endDate', params.endDate)
@@ -56,7 +56,7 @@ export const purchaseApi = {
     return request<Record<string, unknown>>(`/purchases${qs ? `?${qs}` : ''}`).then(normalizePurchaseList)
   },
   get: (id: number) => request<{ purchase: Purchase }>(`/purchases/${id}`).then((res) => res.purchase),
-  create: (payload: PurchasePayload) => request<Purchase>('/purchases', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }),
-  update: (id: number, payload: Partial<PurchasePayload>) => request<Purchase>(`/purchases/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }),
+  create: (payload: PurchasePayload) => request<{ message: string; purchase: Purchase }>('/purchases', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }),
+  update: (id: number, payload: Partial<PurchasePayload>) => request<{ message: string; purchase: Purchase }>(`/purchases/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }),
   remove: (id: number) => request<{ message: string }>(`/purchases/${id}`, { method: 'DELETE' }),
 }

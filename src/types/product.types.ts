@@ -72,6 +72,9 @@ export interface Product {
   brandId: number
   colorId: number
   sizeId: number
+  brandIds: number[]
+  colorIds: number[]
+  sizeIds: number[]
   productImage?: string
   gst: string
   itemCode: string
@@ -80,13 +83,26 @@ export interface Product {
   brand?: { id: number; name: string }
   color?: { id: number; name: string }
   size?: { id: number; name: string }
+  brands: { id: number; name: string }[]
+  colors: { id: number; name: string }[]
+  sizes: { id: number; name: string }[]
 }
 
 export interface ProductListResponse {
   products: Product[]
-  total: number
-  page: number
-  limit: number
+  total?: number
+  page?: number
+  limit?: number
+}
+
+export interface ProductCreateResponse {
+  message: string
+  product: Product
+}
+
+export interface ProductUpdateResponse {
+  message: string
+  product: Product
 }
 
 export interface Party {
@@ -141,22 +157,23 @@ export interface Purchase {
   id: number
   companyId: number
   purchaseNumber: string
-  partyId: number
-  partyName: string
+  supplierId: number
+  supplierName: string
+  productCode: string
   createdById?: number
   invoiceDate: string
-  dueDate: string
   subTotal: number
   gstAmount: number
   discount: number
   grandTotal: number
   paidAmount: number
+  remainingBalance: number
   paymentStatus: 'UNPAID' | 'PARTIAL' | 'PAID' | 'OVERDUE'
   remarks?: string
   status: boolean
   createdAt: string
   updatedAt: string
-  party?: { id: number; partyName: string; mobile: string }
+  supplier?: { id: number; name: string; mobile: string }
   createdBy?: { id: number; name: string }
 }
 
