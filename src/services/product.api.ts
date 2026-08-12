@@ -49,7 +49,12 @@ export const productApi = {
     update: (id: number, formData: FormData) => request<Product>(`/products/${id}`, { method: 'PUT', body: formData }),
     remove: (id: number) => request<{ message: string }>(`/products/${id}`, { method: 'DELETE' }),
   },
-  categories: masterApi<Category>('/product-masters/categories'),
+  categories: {
+    list: () => request<{ categories: Category[] }>('/product-masters/category').then((res) => res.categories),
+    create: (payload: { name: string; unit: 'PIECES' | 'DOZEN'; quantity: number; purchaseAmount: number; saleAmount: number; status: boolean; brands?: string[]; colors?: string[]; sizes?: string[]; brandIds?: number[]; colorIds?: number[]; sizeIds?: number[] }) => request<{ message: string; category: Category }>('/product-masters/category', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }),
+    update: (id: number, payload: { name: string; unit: 'PIECES' | 'DOZEN'; quantity: number; purchaseAmount: number; saleAmount: number; status: boolean; brands?: string[]; colors?: string[]; sizes?: string[]; brandIds?: number[]; colorIds?: number[]; sizeIds?: number[] }) => request<{ message: string; category: Category }>(`/product-masters/category/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }),
+    remove: (id: number) => request<{ message: string }>(`/product-masters/category/${id}`, { method: 'DELETE' }),
+  },
   brands: masterApi<Brand>('/product-masters/brands'),
   colors: masterApi<Color>('/product-masters/colors'),
   sizes: masterApi<Size>('/product-masters/sizes'),

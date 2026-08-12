@@ -8,9 +8,6 @@ import { Dashboard } from '../pages/dashboard/Dashboard'
 import { Products } from '../pages/products/Products'
 import { ProductMasters } from '../pages/products/ProductMasters'
 import { CategoryMaster } from '../pages/products/masters/CategoryMaster'
-import { BrandMaster } from '../pages/products/masters/BrandMaster'
-import { ColorMaster } from '../pages/products/masters/ColorMaster'
-import { SizeMaster } from '../pages/products/masters/SizeMaster'
 import { PartyMaster } from '../pages/parties/PartyMaster'
 import { SupplierMaster } from '../pages/suppliers/SupplierMaster'
 import { PurchaseMaster } from '../pages/purchases/PurchaseMaster'
@@ -33,9 +30,6 @@ export const AppRoutes = () => (
         <Route path="/products" element={<Products />} />
         <Route path="/product-masters" element={<ProductMasters />} />
         <Route path="/product-masters/category" element={<CategoryMaster />} />
-        <Route path="/product-masters/brand" element={<BrandMaster />} />
-        <Route path="/product-masters/color" element={<ColorMaster />} />
-        <Route path="/product-masters/size" element={<SizeMaster />} />
         <Route path="/parties" element={<PartyMaster />} />
         <Route path="/suppliers" element={<SupplierMaster />} />
         <Route path="/purchases" element={<PurchaseMaster />} />

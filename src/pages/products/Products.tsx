@@ -1,21 +1,21 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { ArrowLeft, ImagePlus, Search, X } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useToast, Button, Card } from '../../components/ui'
-import { FormField, Input, Select } from '../../components/forms'
+import { FormField, Input, MultiSelect } from '../../components/forms'
 import { DataTable, type DataTableColumn, type DataTableAction } from '../../components/table'
 import { productApi } from '../../services/product.api'
 import type { Product } from '../../types/product.types'
-import type { Category, Brand, Color, Size } from '../../types/product.types'
+import type { Brand, Category, Color, Size } from '../../types/product.types'
 
 type FormState = {
   productCode: string
   productName: string
-  categoryId: string
-  brandId: string
-  colorId: string
-  sizeId: string
+  categoryIds: (number | string)[]
+  brandIds: (number | string)[]
+  colorIds: (number | string)[]
+  sizeIds: (number | string)[]
   gst: string
   itemCode: string
   status: boolean
@@ -24,10 +24,10 @@ type FormState = {
 const emptyForm: FormState = {
   productCode: '',
   productName: '',
-  categoryId: '',
-  brandId: '',
-  colorId: '',
-  sizeId: '',
+  categoryIds: [],
+  brandIds: [],
+  colorIds: [],
+  sizeIds: [],
   gst: '',
   itemCode: '',
   status: true,
@@ -46,9 +46,7 @@ export const Products = () => {
   const [imagePreview, setImagePreview] = useState<string>('')
 
   const [categories, setCategories] = useState<Category[]>([])
-  const [brands, setBrands] = useState<Brand[]>([])
-  const [colors, setColors] = useState<Color[]>([])
-  const [sizes, setSizes] = useState<Size[]>([])
+  const [refreshingMasters, setRefreshingMasters] = useState(false)
 
   const [items, setItems] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
@@ -59,24 +57,46 @@ export const Products = () => {
 
   const [productCodeError, setProductCodeError] = useState('')
 
+  const [pendingBrands, setPendingBrands] = useState<string[]>([])
+  const [pendingColors, setPendingColors] = useState<string[]>([])
+  const [pendingSizes, setPendingSizes] = useState<string[]>([])
+
+  const brandOptions = [
+    ...Object.values(categories.reduce<Record<number, Brand>>((acc, c) => {
+      c.brands.forEach((b) => { acc[b.id] = b })
+      return acc
+    }, {})),
+    ...pendingBrands.map((name, idx) => ({ id: `pending-brand-${idx}`, name })),
+  ]
+  const colorOptions = [
+    ...Object.values(categories.reduce<Record<number, Color>>((acc, c) => {
+      c.colors.forEach((clr) => { acc[clr.id] = clr })
+      return acc
+    }, {})),
+    ...pendingColors.map((name, idx) => ({ id: `pending-color-${idx}`, name })),
+  ]
+  const sizeOptions = [
+    ...Object.values(categories.reduce<Record<number, Size>>((acc, c) => {
+      c.sizes.forEach((s) => { acc[s.id] = s })
+      return acc
+    }, {})),
+    ...pendingSizes.map((name, idx) => ({ id: `pending-size-${idx}`, name })),
+  ]
+
+  const location = useLocation()
+
   useEffect(() => {
     let cancelled = false
     const loadMasters = async () => {
       try {
-        const [cats, brds, clrs, szs] = await Promise.all([
-          productApi.categories.list(),
-          productApi.brands.list(),
-          productApi.colors.list(),
-          productApi.sizes.list(),
-        ])
+        const data = await productApi.categories.list()
         if (!cancelled) {
-          setCategories(cats)
-          setBrands(brds)
-          setColors(clrs)
-          setSizes(szs)
+          setCategories(data)
         }
       } catch {
         if (!cancelled) toast({ title: 'Failed to load master data', variant: 'error' })
+      } finally {
+        if (!cancelled) setRefreshingMasters(false)
       }
     }
 
@@ -94,10 +114,27 @@ export const Products = () => {
       }
     }
 
+    setRefreshingMasters(true)
     loadMasters()
     loadProducts()
     return () => { cancelled = true }
-  }, [toast, search])
+  }, [toast, search, location.pathname])
+
+  useEffect(() => {
+    const handleFocus = async () => {
+      setRefreshingMasters(true)
+      try {
+        const data = await productApi.categories.list()
+        setCategories(data)
+      } catch {
+        toast({ title: 'Failed to refresh master data', variant: 'error' })
+      } finally {
+        setRefreshingMasters(false)
+      }
+    }
+    window.addEventListener('focus', handleFocus)
+    return () => window.removeEventListener('focus', handleFocus)
+  }, [toast])
 
   const resetForm = () => {
     setForm(emptyForm)
@@ -105,6 +142,9 @@ export const Products = () => {
     setImageFile(null)
     setImagePreview('')
     setProductCodeError('')
+    setPendingBrands([])
+    setPendingColors([])
+    setPendingSizes([])
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
@@ -154,16 +194,19 @@ export const Products = () => {
     setForm({
       productCode: row.productCode,
       productName: row.productName,
-      categoryId: String(row.categoryId),
-      brandId: String(row.brandId),
-      colorId: String(row.colorId),
-      sizeId: String(row.sizeId),
+      categoryIds: [row.categoryId],
+      brandIds: [row.brandId],
+      colorIds: [row.colorId],
+      sizeIds: [row.sizeId],
       gst: row.gst,
       itemCode: row.itemCode,
       status: row.status,
     })
     setImageFile(null)
     setImagePreview(row.productImage || '')
+    setPendingBrands([])
+    setPendingColors([])
+    setPendingSizes([])
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -177,10 +220,14 @@ export const Products = () => {
       const fd = new FormData()
       fd.append('productCode', form.productCode)
       fd.append('productName', form.productName)
-      fd.append('categoryId', form.categoryId)
-      fd.append('brandId', form.brandId)
-      fd.append('colorId', form.colorId)
-      fd.append('sizeId', form.sizeId)
+      const realCategoryIds = form.categoryIds.filter((id) => typeof id === 'number')
+      const realBrandIds = form.brandIds.filter((id) => typeof id === 'number')
+      const realColorIds = form.colorIds.filter((id) => typeof id === 'number')
+      const realSizeIds = form.sizeIds.filter((id) => typeof id === 'number')
+      realCategoryIds.forEach((id) => fd.append('categoryId', String(id)))
+      realBrandIds.forEach((id) => fd.append('brandId', String(id)))
+      realColorIds.forEach((id) => fd.append('colorId', String(id)))
+      realSizeIds.forEach((id) => fd.append('sizeId', String(id)))
       fd.append('gst', form.gst)
       fd.append('itemCode', form.itemCode)
       fd.append('status', String(form.status))
@@ -198,10 +245,16 @@ export const Products = () => {
       resetForm()
       const data = await productApi.products.list()
       setItems(data.products)
-      setTotal(data.products.length)
+      setTotal(data.total)
     } catch (err) {
       toast({ title: editing ? 'Update failed' : 'Creation failed', description: (err as Error).message, variant: 'error' })
     }
+  }
+
+  const addPendingItem = (type: 'pendingBrands' | 'pendingColors' | 'pendingSizes') => (name: string) => {
+    if (type === 'pendingBrands') setPendingBrands((prev) => [...prev, name])
+    if (type === 'pendingColors') setPendingColors((prev) => [...prev, name])
+    if (type === 'pendingSizes') setPendingSizes((prev) => [...prev, name])
   }
 
   const remove = async (row: Product) => {
@@ -313,31 +366,42 @@ export const Products = () => {
             <FormField label="Item Code"><Input value={form.itemCode} onChange={(e) => setForm({ ...form, itemCode: e.target.value })} /></FormField>
 
             <FormField label="Category" required>
-              <Select required value={form.categoryId} onChange={(e) => setForm({ ...form, categoryId: e.target.value })}>
-                <option value="">Select category</option>
-                {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </Select>
+              <MultiSelect
+                options={categories}
+                value={form.categoryIds}
+                onChange={(categoryIds) => setForm({ ...form, categoryIds })}
+                placeholder="Select categories"
+              />
             </FormField>
 
             <FormField label="Brand" required>
-              <Select required value={form.brandId} onChange={(e) => setForm({ ...form, brandId: e.target.value })}>
-                <option value="">Select brand</option>
-                {brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
-              </Select>
+              <MultiSelect
+                options={brandOptions}
+                value={form.brandIds}
+                onChange={(brandIds) => setForm({ ...form, brandIds })}
+                onAddNew={addPendingItem('pendingBrands')}
+                placeholder="Select brands"
+              />
             </FormField>
 
             <FormField label="Color" required>
-              <Select required value={form.colorId} onChange={(e) => setForm({ ...form, colorId: e.target.value })}>
-                <option value="">Select color</option>
-                {colors.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </Select>
+              <MultiSelect
+                options={colorOptions}
+                value={form.colorIds}
+                onChange={(colorIds) => setForm({ ...form, colorIds })}
+                onAddNew={addPendingItem('pendingColors')}
+                placeholder="Select colors"
+              />
             </FormField>
 
             <FormField label="Size" required>
-              <Select required value={form.sizeId} onChange={(e) => setForm({ ...form, sizeId: e.target.value })}>
-                <option value="">Select size</option>
-                {sizes.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </Select>
+              <MultiSelect
+                options={sizeOptions}
+                value={form.sizeIds}
+                onChange={(sizeIds) => setForm({ ...form, sizeIds })}
+                onAddNew={addPendingItem('pendingSizes')}
+                placeholder="Select sizes"
+              />
             </FormField>
           </div>
 
@@ -345,7 +409,7 @@ export const Products = () => {
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
             <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
               <ImagePlus size={18} />
-              {imagePreview ? 'Change Image' : 'Upload Product Image'}
+              {imagePreview ? 'Change Image' : 'Upload Product Image (Optional)'}
             </Button>
             {imagePreview && (
               <div className="relative mt-4">
@@ -375,6 +439,9 @@ export const Products = () => {
               className="pl-9"
             />
           </div>
+          {refreshingMasters && (
+            <span className="text-xs text-text-secondary">Refreshing masters...</span>
+          )}
         </div>
       </Card>
 

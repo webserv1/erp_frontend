@@ -1,31 +1,66 @@
 export type MasterStatus = 'ACTIVE' | 'INACTIVE'
 
-export interface Category {
-  id: number
-  companyId: number
-  name: string
-  status: MasterStatus
-}
-
 export interface Brand {
   id: number
   companyId: number
+  type: 'BRAND'
   name: string
-  status: MasterStatus
+  categoryId: number
+  unit: 'PIECES' | 'DOZEN'
+  quantity: number | null
+  purchaseAmount: number | null
+  saleAmount: number | null
+  status: boolean
+  createdAt: string
+  updatedAt: string
 }
 
 export interface Color {
   id: number
   companyId: number
+  type: 'COLOR'
   name: string
-  status: MasterStatus
+  categoryId: number
+  unit: 'PIECES' | 'DOZEN'
+  quantity: number | null
+  purchaseAmount: number | null
+  saleAmount: number | null
+  status: boolean
+  createdAt: string
+  updatedAt: string
 }
 
 export interface Size {
   id: number
   companyId: number
+  type: 'SIZE'
   name: string
-  status: MasterStatus
+  categoryId: number
+  unit: 'PIECES' | 'DOZEN'
+  quantity: number | null
+  purchaseAmount: number | null
+  saleAmount: number | null
+  status: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface Category {
+  id: number
+  companyId: number
+  type: 'CATEGORY'
+  name: string
+  categoryId: null
+  unit: 'PIECES' | 'DOZEN'
+  quantity: number
+  purchaseAmount: number
+  saleAmount: number
+  status: boolean
+  createdAt: string
+  updatedAt: string
+  brands: Brand[]
+  colors: Color[]
+  sizes: Size[]
 }
 
 export interface Product {
