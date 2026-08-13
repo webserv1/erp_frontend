@@ -18,6 +18,9 @@ type FormState = {
   sizeIds: number[]
   gst: string
   itemCode: string
+  purchasePrice: string
+  quantity: string
+  unit: 'PIECES' | 'DOZEN'
   status: boolean
 }
 
@@ -30,10 +33,18 @@ const emptyForm: FormState = {
   sizeIds: [],
   gst: '',
   itemCode: '',
+  purchasePrice: '',
+  quantity: '',
+  unit: 'PIECES',
   status: true,
 }
 
 const PRODUCT_CODE_REGEX = /^[A-Za-z]{3,}_[0-9]{5,}$/
+
+const unitOptions = [
+  { value: 'PIECES', label: 'Pieces' },
+  { value: 'DOZEN', label: 'Dozen' },
+]
 
 export const Products = () => {
   const navigate = useNavigate()
@@ -176,6 +187,9 @@ export const Products = () => {
       sizeIds: row.sizeIds,
       gst: row.gst,
       itemCode: row.itemCode,
+      purchasePrice: String(row.purchasePrice ?? ''),
+      quantity: String(row.quantity ?? ''),
+      unit: row.unit || 'PIECES',
       status: row.status,
     })
     setImageFile(null)
@@ -203,6 +217,9 @@ export const Products = () => {
       form.sizeIds.forEach((id) => fd.append('sizeIds', String(id)))
       fd.append('gst', form.gst)
       fd.append('itemCode', form.itemCode)
+      if (form.purchasePrice) fd.append('purchasePrice', form.purchasePrice)
+      if (form.quantity) fd.append('quantity', form.quantity)
+      fd.append('unit', form.unit)
       fd.append('status', String(form.status))
       if (imageFile) {
         fd.append('productImage', imageFile)
@@ -300,6 +317,9 @@ export const Products = () => {
     },
     { key: 'gst', header: 'GST', width: '80px' },
     { key: 'itemCode', header: 'Item Code', width: '120px' },
+    { key: 'purchasePrice', header: 'Purchase Price', width: '120px', cell: (row) => `₹${row.purchasePrice ?? '—'}` },
+    { key: 'quantity', header: 'Quantity', width: '100px', cell: (row) => row.quantity ?? '—' },
+    { key: 'unit', header: 'Unit', width: '100px', cell: (row) => row.unit || '—' },
     {
       key: 'status',
       header: 'Status',
@@ -345,7 +365,20 @@ export const Products = () => {
             <FormField label="Item Code"><Input value={form.itemCode} onChange={(e) => setForm({ ...form, itemCode: e.target.value })} /></FormField>
 
             <FormField label="Category" required>
-              <Select required value={form.categoryId} onChange={(e) => setForm({ ...form, categoryId: e.target.value, brandIds: [], colorIds: [], sizeIds: [] })}>
+              <Select required value={form.categoryId} onChange={(e) => {
+                const categoryId = e.target.value
+                const category = categories.find((c) => c.id === Number(categoryId))
+                setForm({
+                  ...form,
+                  categoryId,
+                  brandIds: [],
+                  colorIds: [],
+                  sizeIds: [],
+                  purchasePrice: category?.purchaseAmount != null ? String(category.purchaseAmount) : '',
+                  quantity: category?.quantity != null ? String(category.quantity) : '',
+                  unit: category?.unit || 'PIECES',
+                })
+              }}>
                 <option value="">Select category</option>
                 {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </Select>
@@ -379,6 +412,13 @@ export const Products = () => {
                 placeholder="Select one or more sizes"
                 disabled={!form.categoryId}
               />
+            </FormField>
+            <FormField label="Purchase Price"><Input type="number" value={form.purchasePrice} onChange={(e) => setForm({ ...form, purchasePrice: e.target.value })} placeholder="0.00" /></FormField>
+            <FormField label="Quantity"><Input type="number" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })} placeholder="0" /></FormField>
+            <FormField label="Unit">
+              <Select value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value as 'PIECES' | 'DOZEN' })}>
+                {unitOptions.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+              </Select>
             </FormField>
           </div>
 

@@ -78,6 +78,9 @@ export interface Product {
   productImage?: string
   gst: string
   itemCode: string
+  purchasePrice: string | number
+  quantity: number
+  unit: 'PIECES' | 'DOZEN'
   status: boolean
   category?: { id: number; name: string }
   brand?: { id: number; name: string }
