@@ -1,40 +1,54 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #D4AF37;
-  --color-primary-dark: #B8860B;
+  --color-primary: #d4af37;
+  --color-primary-dark: #b8860b;
   --color-secondary: #111827;
-  --color-background: #FFFFFF;
-  --color-card: #FAFAFA;
-  --color-border-gold: #E8D9A9;
+  --color-background: #ffffff;
+  --color-card: #fafafa;
+  --color-border-gold: #e8d9a9;
   --color-sidebar: #111827;
-  --color-sidebar-hover: #C9A227;
+  --color-sidebar-hover: #c9a227;
   --color-text-primary: #111827;
-  --color-text-secondary: #6B7280;
+  --color-text-secondary: #6b7280;
 }
 
 @layer base {
-  * { @apply border-border-gold; }
-  body { @apply m-0 min-w-80 bg-background font-sans text-text-primary antialiased; }
-  button, input, select, textarea { font: inherit; }
+  * {
+    @apply border-border-gold;
+  }
+  body {
+    @apply m-0 min-w-80 bg-background font-sans text-text-primary antialiased;
+  }
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
 }
 
 @layer components {
-  .btn-primary { @apply inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2.5 font-semibold text-white transition-all duration-300 hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60; }
-  .btn-outline { @apply inline-flex items-center justify-center rounded-lg border border-primary px-4 py-2.5 font-semibold text-primary transition-all duration-300 hover:bg-primary hover:text-white focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2; }
-  .input-field { @apply mt-1.5 block w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm outline-none transition placeholder:text-gray-400 focus:border-primary focus:ring-2 focus:ring-primary/20; }
-  .field-label { @apply text-sm font-semibold text-text-primary; }
-  .premium-card { @apply rounded-xl border border-border-gold bg-card shadow-md transition-all duration-300 hover:shadow-xl; }
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2.5 font-semibold text-white transition-all duration-300 hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+  .btn-outline {
+    @apply inline-flex items-center justify-center rounded-lg border border-primary px-4 py-2.5 font-semibold text-primary transition-all duration-300 hover:bg-primary hover:text-white focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+  }
+  .input-field {
+    @apply mt-1.5 block w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm outline-none transition placeholder:text-gray-400 focus:border-primary focus:ring-2 focus:ring-primary/20;
+  }
+  .field-label {
+    @apply text-sm font-semibold text-text-primary;
+  }
+  .premium-card {
+    @apply rounded-xl border border-border-gold bg-card shadow-md transition-all duration-300 hover:shadow-xl;
+  }
 }
 
-@font-face {
-  font-family: 'Inter';
-  src: url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-  font-weight: 300 700;
-  font-style: normal;
-  font-display: swap;
-}
-
-html, body, #root {
-  font-family: 'Inter', sans-serif;
+html,
+body,
+#root {
+  font-family: "Inter", sans-serif;
 }
