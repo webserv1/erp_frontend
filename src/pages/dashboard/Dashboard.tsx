@@ -239,7 +239,7 @@ export const Dashboard = () => {
                     </p>
                   </div>
                   <p className="shrink-0 text-sm font-bold text-primary-dark">
-                    {currency.format(purchase.grandTotal)}
+                    {currency.format(purchase.purchasePrice)}
                   </p>
                 </div>
               ))}

@@ -43,7 +43,7 @@ export interface LowStockAlert {
 export interface LastPartyPurchase {
   id: number;
   purchaseNumber: string;
-  grandTotal: number;
+  purchasePrice: number;
   createdAt: string;
   partyId: number;
   partyName: string;

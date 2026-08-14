@@ -32,6 +32,8 @@ type Form = {
   unit: "PIECES" | "DOZEN";
   purchasePrice: string;
   salePrice: string;
+  paidAmount: string;
+  paymentStatus: "UNPAID" | "PARTIAL" | "PAID" | "OVERDUE";
   status: boolean;
 };
 const empty: Form = {
@@ -48,6 +50,8 @@ const empty: Form = {
   unit: "PIECES",
   purchasePrice: "",
   salePrice: "",
+  paidAmount: "0",
+  paymentStatus: "UNPAID",
   status: true,
 };
 const names = (items: { name: string }[]) =>
@@ -178,6 +182,8 @@ export const Sales = () => {
       unit: sale.unit,
       purchasePrice: String(sale.purchasePrice),
       salePrice: String(sale.salePrice),
+      paidAmount: String(sale.paidAmount),
+      paymentStatus: sale.paymentStatus,
       status: sale.status,
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -205,6 +211,8 @@ export const Sales = () => {
       unit: form.unit,
       purchasePrice: Number(form.purchasePrice),
       salePrice: Number(form.salePrice),
+      paidAmount: Number(form.paidAmount),
+      paymentStatus: form.paymentStatus,
       status: form.status,
     };
     try {
@@ -266,7 +274,17 @@ export const Sales = () => {
       header: "Sale Price",
       cell: (sale) => `₹${sale.salePrice}`,
     },
-    { key: "total", header: "Total", cell: (sale) => `₹${sale.total}` },
+    {
+      key: "paidAmount",
+      header: "Paid Amount",
+      cell: (sale) => `₹${sale.paidAmount}`,
+    },
+    {
+      key: "remainingAmount",
+      header: "Remaining Amount",
+      cell: (sale) => `₹${sale.remainingAmount}`,
+    },
+    { key: "paymentStatus", header: "Payment Status" },
     {
       key: "perSaleProfit",
       header: "Per Sale Profit",
@@ -466,6 +484,36 @@ export const Sales = () => {
                 }
               />
             </FormField>
+            <FormField label="Paid Amount" required>
+              <Input
+                required
+                min="0"
+                type="number"
+                value={form.paidAmount}
+                onChange={(event) =>
+                  setForm((current) => ({
+                    ...current,
+                    paidAmount: event.target.value,
+                  }))
+                }
+              />
+            </FormField>
+            <FormField label="Payment Status" required>
+              <Select
+                value={form.paymentStatus}
+                onChange={(event) =>
+                  setForm((current) => ({
+                    ...current,
+                    paymentStatus: event.target.value as Form["paymentStatus"],
+                  }))
+                }
+              >
+                <option value="UNPAID">Unpaid</option>
+                <option value="PARTIAL">Partial</option>
+                <option value="PAID">Paid</option>
+                <option value="OVERDUE">Overdue</option>
+              </Select>
+            </FormField>
             <FormField label="Status">
               <Select
                 value={form.status ? "ACTIVE" : "INACTIVE"}
@@ -555,6 +603,14 @@ export const Sales = () => {
             </span>
             <span>Purchase Price</span>
             <span>₹{viewing.purchasePrice}</span>
+            <span>Paid Amount</span>
+            <span>{viewing.paidAmount}</span>
+            <span>Remaining Amount</span>
+            <span>{viewing.remainingAmount}</span>
+            <span>Payment Status</span>
+            <span>{viewing.paymentStatus}</span>
+            <span>Per Sale Profit</span>
+            <span>{viewing.perSaleProfit}</span>
           </div>
         )}
       </Modal>

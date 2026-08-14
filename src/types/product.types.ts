@@ -165,10 +165,7 @@ export interface Purchase {
   productCode: string;
   createdById?: number;
   invoiceDate: string;
-  subTotal: number;
-  gstAmount: number;
-  discount: number;
-  grandTotal: number;
+  purchasePrice: number;
   paidAmount: number;
   remainingBalance: number;
   paymentStatus: "UNPAID" | "PARTIAL" | "PAID" | "OVERDUE";
@@ -207,7 +204,9 @@ export interface Sale {
   unit: "PIECES" | "DOZEN";
   salePrice: number;
   purchasePrice: number;
-  total: number;
+  paidAmount: number;
+  remainingAmount: number;
+  paymentStatus: "UNPAID" | "PARTIAL" | "PAID" | "OVERDUE";
   perSaleProfit: number;
   status: boolean;
   createdAt: string;

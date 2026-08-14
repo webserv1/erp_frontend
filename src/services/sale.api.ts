@@ -15,6 +15,8 @@ export type SalePayload = {
   unit: "PIECES" | "DOZEN";
   salePrice: number;
   purchasePrice: number;
+  paidAmount?: number;
+  paymentStatus?: "UNPAID" | "PARTIAL" | "PAID" | "OVERDUE";
   status: boolean;
 };
 export type ProductDetails = {
