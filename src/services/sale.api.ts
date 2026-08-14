@@ -36,6 +36,21 @@ export type ProductDetails = {
   };
   supplier: { id: number; name: string } | null;
 };
+
+export type SaleInvoice = {
+  invoiceNumber: string;
+  issueDate: string;
+  company: { id: number; name: string; logoUrl: string | null };
+  customer: { id: number; name: string } | null;
+  sale: Omit<
+    Sale,
+    | "supplier"
+    | "supplierName"
+    | "purchasePrice"
+    | "remainingAmount"
+    | "perSaleProfit"
+  >;
+};
 const base = import.meta.env.VITE_API_BASE_URL;
 if (!base)
   throw new Error("VITE_API_BASE_URL is missing. Add it to your .env file.");
@@ -74,6 +89,10 @@ export const saleApi = {
   productDetails: (productCode: string) =>
     request<ProductDetails>(
       `/sales/product-details?productCode=${encodeURIComponent(productCode)}`,
+    ),
+  invoice: (id: number) =>
+    request<{ invoice: SaleInvoice }>(`/sales/${id}/invoice`).then(
+      (data) => data.invoice,
     ),
   create: (payload: SalePayload) =>
     request<{ message: string; sale: Sale }>("/sales", {

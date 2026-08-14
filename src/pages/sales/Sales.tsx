@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
-import { ArrowLeft, Eye, Pencil, Search, Trash2 } from "lucide-react";
+import { ArrowLeft, Eye, FileText, Pencil, Search, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast, Button, Card, Modal } from "../../components/ui";
 import { FormField, Input, MultiSelect, Select } from "../../components/forms";
@@ -17,6 +17,7 @@ import {
 import { partyApi } from "../../services/party.api";
 import { productApi } from "../../services/product.api";
 import type { Party, Product, Sale } from "../../types/product.types";
+import { SaleInvoiceModal } from "./SaleInvoiceModal";
 
 type Form = {
   productCode: string;
@@ -64,6 +65,9 @@ export const Sales = () => {
   const [details, setDetails] = useState<ProductDetails | null>(null);
   const [editing, setEditing] = useState<Sale | null>(null);
   const [viewing, setViewing] = useState<Sale | null>(null);
+  const [invoice, setInvoice] = useState<Awaited<
+    ReturnType<typeof saleApi.invoice>
+  > | null>(null);
   const [items, setItems] = useState<Sale[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [parties, setParties] = useState<Party[]>([]);
@@ -243,6 +247,17 @@ export const Sales = () => {
       setSaving(false);
     }
   };
+  const openInvoice = async (sale: Sale) => {
+    try {
+      setInvoice(await saleApi.invoice(sale.id));
+    } catch (error) {
+      toast({
+        title: "Unable to generate invoice",
+        description: (error as Error).message,
+        variant: "error",
+      });
+    }
+  };
   const columns: DataTableColumn<Sale>[] = [
     { key: "productCode", header: "Product Code" },
     { key: "productName", header: "Product Name" },
@@ -293,6 +308,11 @@ export const Sales = () => {
   ];
   const actions: DataTableAction<Sale>[] = [
     { label: <Eye size={16} />, onClick: setViewing, title: "View" },
+    {
+      label: <FileText size={16} />,
+      onClick: openInvoice,
+      title: "Generate Invoice",
+    },
     { label: <Pencil size={16} />, onClick: edit, title: "Edit" },
     {
       label: <Trash2 size={16} />,
@@ -614,6 +634,7 @@ export const Sales = () => {
           </div>
         )}
       </Modal>
+      <SaleInvoiceModal invoice={invoice} onClose={() => setInvoice(null)} />
     </>
   );
 };
