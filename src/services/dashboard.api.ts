@@ -40,10 +40,25 @@ export interface LowStockAlert {
   salePrice: number;
 }
 
+export interface BalanceSummary {
+  partyOutstanding: number;
+  supplierPayable: number;
+  highestParty: { id: number | null; name: string; amount: number } | null;
+  highestSupplier: { id: number | null; name: string; amount: number } | null;
+}
+
+export interface OverduePartyReminder {
+  id: number | null;
+  name: string;
+  amount: number;
+  overdueSince: string;
+}
+
 export interface LastPartyPurchase {
   id: number;
-  purchaseNumber: string;
-  purchasePrice: number;
+  productCode: string;
+  productName: string;
+  salePrice: number;
   createdAt: string;
   partyId: number;
   partyName: string;
@@ -57,7 +72,9 @@ export interface DashboardData {
   totalSalesProfit: number;
   today: TodayData;
   lowStockAlerts: LowStockAlert[];
-  lastPartyPurchases: LastPartyPurchase[];
+  balances: BalanceSummary;
+  overduePartyReminders: OverduePartyReminder[];
+  lastPartyPurchase: LastPartyPurchase | null;
 }
 
 export const dashboardApi = {
@@ -86,9 +103,16 @@ export const dashboardApi = {
         lowStockAlerts: Array.isArray(dashboard.lowStockAlerts)
           ? dashboard.lowStockAlerts
           : [],
-        lastPartyPurchases: Array.isArray(dashboard.lastPartyPurchases)
-          ? dashboard.lastPartyPurchases
+        balances: dashboard.balances ?? {
+          partyOutstanding: 0,
+          supplierPayable: 0,
+          highestParty: null,
+          highestSupplier: null,
+        },
+        overduePartyReminders: Array.isArray(dashboard.overduePartyReminders)
+          ? dashboard.overduePartyReminders
           : [],
+        lastPartyPurchase: dashboard.lastPartyPurchase ?? null,
       };
     });
   },
