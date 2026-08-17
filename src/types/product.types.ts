@@ -238,12 +238,19 @@ export interface Stock {
   qtyOut: number;
   balanceStock: number;
   salePrice: number;
+  purchasePrice: number;
   saleValue: number;
   remarks?: string;
   status: boolean;
   createdAt: string;
   updatedAt: string;
   size?: { id: number; name: string };
+  brandIds: number[];
+  colorIds: number[];
+  sizeIds: number[];
+  brands: { id: number; name: string }[];
+  colors: { id: number; name: string }[];
+  sizes: { id: number; name: string }[];
 }
 
 export interface StockListResponse {
