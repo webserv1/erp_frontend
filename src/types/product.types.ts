@@ -312,6 +312,12 @@ export interface ReportData {
   purchases: { count: number; total: number };
   expenses: { count: number; total: number };
   netProfit: number;
+  balances: {
+    partyOutstanding: number;
+    supplierPayable: number;
+    parties: { id: number | null; name: string; balance: number }[];
+    suppliers: { id: number | null; name: string; balance: number }[];
+  };
   salesTrend: SalesTrend[];
   topProducts: TopProduct[];
   topParties: TopParty[];
