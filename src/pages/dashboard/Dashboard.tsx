@@ -36,7 +36,8 @@ export const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const isAdmin = user?.role.name === "ADMIN";
   const isSqarsGarments =
-    user?.company?.name.trim().toLocaleLowerCase() === "sqars garments";
+    user?.company?.name.replace(/\s+/g, "").toLocaleLowerCase() ===
+    "sqarsgarments";
 
   useEffect(() => {
     let cancelled = false;
@@ -149,6 +150,25 @@ export const Dashboard = () => {
       label: "Total Sales Profit",
       icon: TrendingUp,
       value: value(currency.format(dashboard?.totalSalesProfit ?? 0)),
+      breakdown:
+        isSqarsGarments && !loading
+          ? [
+              {
+                initials: "SQ",
+                percentage: 60,
+                amount: currency.format(
+                  (dashboard?.totalSalesProfit ?? 0) * 0.6,
+                ),
+              },
+              {
+                initials: "ARS",
+                percentage: 40,
+                amount: currency.format(
+                  (dashboard?.totalSalesProfit ?? 0) * 0.4,
+                ),
+              },
+            ]
+          : undefined,
       accent: "secondary" as const,
       adminOnly: true,
     },
@@ -170,7 +190,6 @@ export const Dashboard = () => {
             Good to see you, {user?.name.split(" ")[0]}.
           </h2>
         </div>
-      
 
         <section aria-labelledby="business-at-a-glance">
           <h3
@@ -189,7 +208,7 @@ export const Dashboard = () => {
         </section>
 
         <section className="mt-6" aria-labelledby="highest-balances">
-         <h3
+          <h3
             id="highest-balances"
             className="inline-block rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-sm font-extrabold tracking-wider text-secondary shadow-sm"
           >

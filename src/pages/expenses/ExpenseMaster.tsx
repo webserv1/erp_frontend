@@ -62,6 +62,9 @@ export const ExpenseMaster = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const isAdmin = user?.role.name === "ADMIN";
+  const isSqarsGarments =
+    user?.company?.name.replace(/\s+/g, "").toLocaleLowerCase() ===
+    "sqarsgarments";
 
   const [form, setForm] = useState<FormState>(emptyForm);
   const [editing, setEditing] = useState<Expense | null>(null);
@@ -351,11 +354,41 @@ export const ExpenseMaster = () => {
         <div className="mb-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           <Card className="p-6">
             <p className="text-sm text-text-secondary">This Month's Total</p>
-            <p className="mt-1 text-2xl font-bold text-secondary">
-              {loading
-                ? "..."
-                : `₹${(summary?.thisMonthTotal ?? 0).toLocaleString("en-IN")}`}
-            </p>
+            {isSqarsGarments ? (
+              <div className="mt-2">
+                <p className="text-xl font-bold text-secondary">
+                  {loading
+                    ? "..."
+                    : `₹${(summary?.thisMonthTotal ?? 0).toLocaleString("en-IN")}`}
+                </p>
+                <div className="mt-3 grid grid-cols-2 gap-3">
+                  {[
+                    { initials: "SQ", percentage: 50 },
+                    { initials: "ARS", percentage: 50 },
+                  ].map((part) => (
+                    <div
+                      key={part.initials}
+                      className="rounded-lg border border-border-gold px-3 py-2"
+                    >
+                      <p className="text-xs font-bold text-text-secondary">
+                        {part.initials} {part.percentage}%
+                      </p>
+                      <p className="mt-1 text-base font-bold text-secondary">
+                        {loading
+                          ? "..."
+                          : `₹${((summary?.thisMonthTotal ?? 0) * 0.5).toLocaleString("en-IN")}`}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <p className="mt-1 text-2xl font-bold text-secondary">
+                {loading
+                  ? "..."
+                  : `₹${(summary?.thisMonthTotal ?? 0).toLocaleString("en-IN")}`}
+              </p>
+            )}
           </Card>
           <Card className="p-6">
             <p className="text-sm text-text-secondary">Total Records</p>
