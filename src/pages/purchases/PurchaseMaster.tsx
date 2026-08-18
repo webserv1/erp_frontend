@@ -373,9 +373,14 @@ export const PurchaseMaster = () => {
             <FormField label="Purchase Number" required>
               <Input
                 required
+                inputMode="numeric"
+                pattern="[0-9]*"
                 value={form.purchaseNumber}
                 onChange={(e) =>
-                  setForm({ ...form, purchaseNumber: e.target.value })
+                  setForm({
+                    ...form,
+                    purchaseNumber: e.target.value.replace(/\D/g, ""),
+                  })
                 }
               />
             </FormField>
