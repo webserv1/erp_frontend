@@ -87,9 +87,9 @@ export const ExpenseMaster = () => {
   } | null>(null);
   const [billPreviewUrl, setBillPreviewUrl] = useState<string | null>(null);
   const billPreviewRef = useRef<string | null>(null);
+  const billInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
-    if (!isAdmin) return;
     let cancelled = false;
     const loadExpenses = async () => {
       try {
@@ -142,6 +142,7 @@ export const ExpenseMaster = () => {
   }, []);
 
   useEffect(() => {
+    if (!isAdmin) return;
     let cancelled = false;
     const loadSummary = async () => {
       try {
@@ -170,6 +171,7 @@ export const ExpenseMaster = () => {
   const resetForm = () => {
     setForm(emptyForm);
     setEditing(null);
+    if (billInputRef.current) billInputRef.current.value = "";
     if (billPreviewRef.current) URL.revokeObjectURL(billPreviewRef.current);
     setBillPreviewUrl(null);
     billPreviewRef.current = null;
@@ -459,6 +461,7 @@ export const ExpenseMaster = () => {
             </FormField>
             <FormField label="Bill">
               <input
+                ref={billInputRef}
                 type="file"
                 onChange={handleFileChange}
                 accept="image/*,.pdf"

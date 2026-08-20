@@ -18,6 +18,7 @@ import { partyApi } from "../../services/party.api";
 import { productApi } from "../../services/product.api";
 import type { Party, Product, Sale } from "../../types/product.types";
 import { SaleInvoiceModal } from "./SaleInvoiceModal";
+import { useAuth } from "../../hooks/useAuth";
 
 type Form = {
   productCode: string;
@@ -61,6 +62,8 @@ const names = (items: { name: string }[]) =>
 export const Sales = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
+  const isAdmin = user?.role.name === "ADMIN";
   const [form, setForm] = useState<Form>(empty);
   const [details, setDetails] = useState<ProductDetails | null>(null);
   const [editing, setEditing] = useState<Sale | null>(null);
@@ -300,11 +303,15 @@ export const Sales = () => {
       cell: (sale) => `₹${sale.remainingAmount}`,
     },
     { key: "paymentStatus", header: "Payment Status" },
-    {
-      key: "perSaleProfit",
-      header: "Per Sale Profit",
-      cell: (sale) => `INR ${sale.perSaleProfit}`,
-    },
+    ...(isAdmin
+      ? [
+          {
+            key: "perSaleProfit" as const,
+            header: "Per Sale Profit",
+            cell: (sale: Sale) => `INR ${sale.perSaleProfit}`,
+          },
+        ]
+      : []),
   ];
   const actions: DataTableAction<Sale>[] = [
     { label: <Eye size={16} />, onClick: setViewing, title: "View" },
@@ -623,14 +630,20 @@ export const Sales = () => {
             </span>
             <span>Purchase Price</span>
             <span>₹{viewing.purchasePrice}</span>
+            <span>Sale Price</span>
+            <span>₹{viewing.salePrice}</span>
             <span>Paid Amount</span>
             <span>{viewing.paidAmount}</span>
             <span>Remaining Amount</span>
             <span>{viewing.remainingAmount}</span>
             <span>Payment Status</span>
             <span>{viewing.paymentStatus}</span>
-            <span>Per Sale Profit</span>
-            <span>{viewing.perSaleProfit}</span>
+            {isAdmin && (
+              <>
+                <span>Per Sale Profit</span>
+                <span>{viewing.perSaleProfit}</span>
+              </>
+            )}
           </div>
         )}
       </Modal>

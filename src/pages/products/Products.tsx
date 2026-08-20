@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
-import { ArrowLeft, ImagePlus, Search, X } from "lucide-react";
+import { ArrowLeft, Eye, ImagePlus, Search, X } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useToast, Button, Card } from "../../components/ui";
+import { useToast, Button, Card, Modal } from "../../components/ui";
 import { FormField, Input, MultiSelect, Select } from "../../components/forms";
 import {
   DataTable,
@@ -57,6 +57,7 @@ export const Products = () => {
 
   const [form, setForm] = useState<FormState>(emptyForm);
   const [editing, setEditing] = useState<Product | null>(null);
+  const [viewing, setViewing] = useState<Product | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
 
@@ -418,6 +419,7 @@ export const Products = () => {
   ];
 
   const actions: DataTableAction<Product>[] = [
+    { label: <Eye size={16} />, onClick: setViewing, title: "View" },
     { label: "Edit", onClick: openEdit },
     {
       label: "Delete",
@@ -691,6 +693,52 @@ export const Products = () => {
           },
         }}
       />
+
+      <Modal
+        open={!!viewing}
+        onClose={() => setViewing(null)}
+        title="Product Details"
+        footer={
+          <Button variant="outline" onClick={() => setViewing(null)}>
+            Close
+          </Button>
+        }
+      >
+        {viewing && (
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <span>Product Code</span>
+            <span>{viewing.productCode}</span>
+            <span>Product Name</span>
+            <span>{viewing.productName}</span>
+            <span>Category</span>
+            <span>{viewing.category?.name || "—"}</span>
+            <span>Brand</span>
+            <span>
+              {viewing.brands.map((item) => item.name).join(", ") || "—"}
+            </span>
+            <span>Color</span>
+            <span>
+              {viewing.colors.map((item) => item.name).join(", ") || "—"}
+            </span>
+            <span>Size</span>
+            <span>
+              {viewing.sizes.map((item) => item.name).join(", ") || "—"}
+            </span>
+            <span>GST</span>
+            <span>{viewing.gst || "—"}</span>
+            <span>Item Code</span>
+            <span>{viewing.itemCode}</span>
+            <span>Purchase Price</span>
+            <span>₹{viewing.purchasePrice ?? "—"}</span>
+            <span>Quantity</span>
+            <span>
+              {viewing.quantity ?? "—"} {viewing.unit || ""}
+            </span>
+            <span>Status</span>
+            <span>{viewing.status ? "Active" : "Inactive"}</span>
+          </div>
+        )}
+      </Modal>
     </>
   );
 };
