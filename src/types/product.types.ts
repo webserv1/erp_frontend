@@ -71,7 +71,6 @@ export interface Product {
   id: number;
   companyId: number;
   productCode: string;
-  productName?: string;
   productName: string;
   categoryId: number;
   brandId: number;
