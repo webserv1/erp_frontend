@@ -9,6 +9,7 @@ export interface Brand {
   unit: "PIECES" | "DOZEN";
   quantity: number | null;
   purchaseAmount: number | null;
+  totalPurchaseAmount: number;
   saleAmount: number | null;
   status: boolean;
   createdAt: string;
@@ -24,6 +25,7 @@ export interface Color {
   unit: "PIECES" | "DOZEN";
   quantity: number | null;
   purchaseAmount: number | null;
+  totalPurchaseAmount: number;
   saleAmount: number | null;
   status: boolean;
   createdAt: string;
@@ -39,6 +41,7 @@ export interface Size {
   unit: "PIECES" | "DOZEN";
   quantity: number | null;
   purchaseAmount: number | null;
+  totalPurchaseAmount: number;
   saleAmount: number | null;
   status: boolean;
   createdAt: string;
@@ -54,6 +57,7 @@ export interface Category {
   unit: "PIECES" | "DOZEN";
   quantity: number;
   purchaseAmount: number;
+  totalPurchaseAmount: number;
   saleAmount: number;
   status: boolean;
   createdAt: string;
@@ -77,8 +81,8 @@ export interface Product {
   sizeIds: number[];
   productImage?: string;
   gst: string;
-  itemCode: string;
   purchasePrice: string | number;
+  totalPurchaseAmount: number;
   quantity: number;
   unit: "PIECES" | "DOZEN";
   status: boolean;

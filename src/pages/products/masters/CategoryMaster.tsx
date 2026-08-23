@@ -150,6 +150,9 @@ export const CategoryMaster = () => {
     ),
     sizePresets,
   );
+  const totalPurchaseAmount =
+    Math.max(0, Number(form.quantity) || 0) *
+    Math.max(0, Number(form.purchaseAmount) || 0);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -364,6 +367,12 @@ export const CategoryMaster = () => {
       cell: (row) => (row.purchaseAmount ? `₹${row.purchaseAmount}` : "—"),
     },
     {
+      key: "totalPurchaseAmount",
+      header: "Total Purchase Amount",
+      width: "170px",
+      cell: (row) => `₹${row.totalPurchaseAmount ?? 0}`,
+    },
+    {
       key: "saleAmount",
       header: "Sale Amount",
       width: "140px",
@@ -541,6 +550,12 @@ export const CategoryMaster = () => {
                 onChange={(e) =>
                   setForm({ ...form, purchaseAmount: e.target.value })
                 }
+              />
+            </FormField>
+            <FormField label="Total Purchase Amount">
+              <Input
+                value={`₹${totalPurchaseAmount.toLocaleString("en-IN")}`}
+                readOnly
               />
             </FormField>
             <FormField label="Sale Amount">

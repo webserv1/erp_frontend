@@ -21,7 +21,6 @@ type FormState = {
   colorIds: number[];
   sizeIds: number[];
   gst: string;
-  itemCode: string;
   purchasePrice: string;
   quantity: string;
   unit: "PIECES" | "DOZEN";
@@ -36,7 +35,6 @@ const emptyForm: FormState = {
   colorIds: [],
   sizeIds: [],
   gst: "",
-  itemCode: "",
   purchasePrice: "",
   quantity: "",
   unit: "PIECES",
@@ -79,6 +77,9 @@ export const Products = () => {
   const brandOptions: Brand[] = selectedCategory?.brands ?? [];
   const colorOptions: Color[] = selectedCategory?.colors ?? [];
   const sizeOptions: Size[] = selectedCategory?.sizes ?? [];
+  const totalPurchaseAmount =
+    Math.max(0, Number(form.quantity) || 0) *
+    Math.max(0, Number(form.purchasePrice) || 0);
 
   const location = useLocation();
 
@@ -209,7 +210,6 @@ export const Products = () => {
       colorIds: row.colorIds,
       sizeIds: row.sizeIds,
       gst: row.gst,
-      itemCode: row.itemCode,
       purchasePrice: String(row.purchasePrice ?? ""),
       quantity: String(row.quantity ?? ""),
       unit: row.unit || "PIECES",
@@ -246,7 +246,6 @@ export const Products = () => {
       form.colorIds.forEach((id) => fd.append("colorIds", String(id)));
       form.sizeIds.forEach((id) => fd.append("sizeIds", String(id)));
       fd.append("gst", form.gst);
-      fd.append("itemCode", form.itemCode);
       if (form.purchasePrice) fd.append("purchasePrice", form.purchasePrice);
       if (form.quantity) fd.append("quantity", form.quantity);
       fd.append("unit", form.unit);
@@ -383,12 +382,17 @@ export const Products = () => {
         )),
     },
     { key: "gst", header: "GST", width: "80px" },
-    { key: "itemCode", header: "Item Code", width: "120px" },
     {
       key: "purchasePrice",
       header: "Purchase Price",
       width: "120px",
       cell: (row) => `₹${row.purchasePrice ?? "—"}`,
+    },
+    {
+      key: "totalPurchaseAmount",
+      header: "Total Purchase Amount",
+      width: "160px",
+      cell: (row) => `₹${row.totalPurchaseAmount ?? 0}`,
     },
     {
       key: "quantity",
@@ -474,19 +478,6 @@ export const Products = () => {
                 value={form.gst}
                 onChange={(e) => setForm({ ...form, gst: e.target.value })}
                 placeholder="e.g. 18%"
-              />
-            </FormField>
-            <FormField label="Item Code">
-              <Input
-                inputMode="numeric"
-                pattern="[0-9]*"
-                value={form.itemCode}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    itemCode: e.target.value.replace(/\D/g, ""),
-                  })
-                }
               />
             </FormField>
 
@@ -579,6 +570,12 @@ export const Products = () => {
                 placeholder="0"
               />
             </FormField>
+            <FormField label="Total Purchase Amount">
+              <Input
+                value={`₹${totalPurchaseAmount.toLocaleString("en-IN")}`}
+                readOnly
+              />
+            </FormField>
             <FormField label="Unit">
               <Select
                 value={form.unit}
@@ -657,7 +654,7 @@ export const Products = () => {
               className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary"
             />
             <Input
-              placeholder="Search products by name, code, or item code"
+              placeholder="Search products by name or code"
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -726,10 +723,10 @@ export const Products = () => {
             </span>
             <span>GST</span>
             <span>{viewing.gst || "—"}</span>
-            <span>Item Code</span>
-            <span>{viewing.itemCode}</span>
             <span>Purchase Price</span>
             <span>₹{viewing.purchasePrice ?? "—"}</span>
+            <span>Total Purchase Amount</span>
+            <span>₹{viewing.totalPurchaseAmount ?? 0}</span>
             <span>Quantity</span>
             <span>
               {viewing.quantity ?? "—"} {viewing.unit || ""}

@@ -115,7 +115,7 @@ export const Dashboard = () => {
       adminOnly: true,
     },
     {
-      label: "This Month Expenses",
+      label: "ThisMonthExpenses",
       icon: Wallet,
       value: value(currency.format(expenses)),
       accent: "secondary" as const,
@@ -147,7 +147,7 @@ export const Dashboard = () => {
       adminOnly: true,
     },
     {
-      label: "Total Sales Profit",
+      label: "TotalSalesProfit",
       icon: TrendingUp,
       value: value(currency.format(dashboard?.totalSalesProfit ?? 0)),
       breakdown:
