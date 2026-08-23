@@ -71,6 +71,7 @@ export interface Product {
   id: number;
   companyId: number;
   productCode: string;
+  productName?: string;
   productName: string;
   categoryId: number;
   brandId: number;
@@ -148,6 +149,10 @@ export interface Supplier {
   state: string;
   country: string;
   pincode: string;
+  paidAmount: number;
+  paymentStatus: "UNPAID" | "PARTIAL" | "PAID" | "OVERDUE";
+  netTotalPurchaseAmount: number;
+  remainingAmount: number;
   status: boolean;
   createdAt: string;
   updatedAt: string;
@@ -170,8 +175,11 @@ export interface Purchase {
   createdById?: number;
   invoiceDate: string;
   purchasePrice: number;
+  quantity: number;
+  totalPurchaseAmount: number;
+  netTotalPurchaseAmount: number;
   paidAmount: number;
-  remainingBalance: number;
+  remainingAmount: number;
   paymentStatus: "UNPAID" | "PARTIAL" | "PAID" | "OVERDUE";
   remarks?: string;
   status: boolean;
@@ -179,6 +187,15 @@ export interface Purchase {
   updatedAt: string;
   supplier?: { id: number; name: string; mobile: string };
   createdBy?: { id: number; name: string };
+  items: {
+    id: number;
+    productCode: string;
+    productName?: string;
+    quantity: number;
+    purchasePrice: number;
+    totalPurchaseAmount: number;
+    remarks?: string;
+  }[];
 }
 
 export interface PurchaseListResponse {

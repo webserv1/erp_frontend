@@ -14,17 +14,12 @@ import { supplierApi } from "../../services/supplier.api";
 import { productApi } from "../../services/product.api";
 import type { Purchase, Supplier, Product } from "../../types/product.types";
 
-type PaymentStatus = Purchase["paymentStatus"];
-
 type FormState = {
   purchaseNumber: string;
   supplierId: string;
   supplierName: string;
-  productCode: string;
   invoiceDate: string;
-  purchasePrice: string;
-  paidAmount: string;
-  paymentStatus: PaymentStatus;
+  productCodes: string[];
   remarks: string;
   status: boolean;
 };
@@ -33,11 +28,8 @@ const emptyForm: FormState = {
   purchaseNumber: "",
   supplierId: "",
   supplierName: "",
-  productCode: "",
   invoiceDate: "",
-  purchasePrice: "",
-  paidAmount: "0",
-  paymentStatus: "UNPAID",
+  productCodes: [""],
   remarks: "",
   status: true,
 };
@@ -61,7 +53,6 @@ export const PurchaseMaster = () => {
   const [statusFilter, setStatusFilter] = useState("");
   const [paymentStatusFilter, setPaymentStatusFilter] = useState("");
   const [supplierFilter, setSupplierFilter] = useState("");
-  const [productCodeManual, setProductCodeManual] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -146,7 +137,6 @@ export const PurchaseMaster = () => {
   const resetForm = () => {
     setForm(emptyForm);
     setEditing(null);
-    setProductCodeManual(false);
   };
 
   const openCreate = () => {
@@ -160,11 +150,8 @@ export const PurchaseMaster = () => {
       purchaseNumber: row.purchaseNumber,
       supplierId: String(row.supplierId),
       supplierName: row.supplierName,
-      productCode: row.productCode,
       invoiceDate: row.invoiceDate.split("T")[0],
-      purchasePrice: String(row.purchasePrice),
-      paidAmount: String(row.paidAmount),
-      paymentStatus: row.paymentStatus,
+      productCodes: row.items?.length ? row.items.map((item) => item.productCode) : [row.productCode],
       remarks: row.remarks || "",
       status: row.status,
     });
@@ -182,11 +169,8 @@ export const PurchaseMaster = () => {
         purchaseNumber: form.purchaseNumber,
         supplierId: Number(form.supplierId),
         supplierName: form.supplierName,
-        productCode: form.productCode,
         invoiceDate: form.invoiceDate,
-        purchasePrice: Number(form.purchasePrice) || 0,
-        paidAmount: Number(form.paidAmount) || 0,
-        paymentStatus: form.paymentStatus,
+        items: form.productCodes.filter(Boolean).map((productCode) => ({ productCode })),
         remarks: form.remarks || undefined,
         status: form.status,
       };
@@ -274,7 +258,18 @@ export const PurchaseMaster = () => {
       header: "Supplier",
       cell: (row) => row.supplierName || row.supplier?.name || "—",
     },
-    { key: "productCode", header: "Product Code", width: "120px" },
+    {
+      key: "productCode",
+      header: "Product Code",
+      width: "150px",
+      cell: (row) => <div className="space-y-1">{row.items.map((item) => <div key={item.id}>{item.productCode}</div>)}</div>,
+    },
+    {
+      key: "productName",
+      header: "Product Name",
+      width: "160px",
+      cell: (row) => <div className="space-y-1">{row.items.map((item) => <div key={item.id}>{item.productName || "—"}</div>)}</div>,
+    },
     {
       key: "invoiceDate",
       header: "Invoice Date",
@@ -285,7 +280,20 @@ export const PurchaseMaster = () => {
       key: "purchasePrice",
       header: "Purchase Price",
       width: "120px",
-      cell: (row) => `₹${row.purchasePrice}`,
+      cell: (row) => <div className="space-y-1">{row.items.map((item) => <div key={item.id}>₹{item.purchasePrice}</div>)}</div>,
+    },
+    { key: "quantity", header: "Quantity", width: "100px", cell: (row) => <div className="space-y-1">{row.items.map((item) => <div key={item.id}>{item.quantity}</div>)}</div> },
+    {
+      key: "totalPurchaseAmount",
+      header: "Total Purchase",
+      width: "140px",
+      cell: (row) => <div className="space-y-1">{row.items.map((item) => <div key={item.id}>₹{item.totalPurchaseAmount}</div>)}</div>,
+    },
+    {
+      key: "netTotalPurchaseAmount",
+      header: "Net Total Purchase",
+      width: "150px",
+      cell: (row) => <span className="font-semibold">₹{row.netTotalPurchaseAmount}</span>,
     },
     {
       key: "paidAmount",
@@ -294,10 +302,10 @@ export const PurchaseMaster = () => {
       cell: (row) => `₹${row.paidAmount}`,
     },
     {
-      key: "remainingBalance",
+      key: "remainingAmount",
       header: "Remaining",
       width: "120px",
-      cell: (row) => `₹${row.remainingBalance}`,
+      cell: (row) => `₹${row.remainingAmount}`,
     },
     {
       key: "paymentStatus",
@@ -409,47 +417,6 @@ export const PurchaseMaster = () => {
                 }
               />
             </FormField>
-            <FormField label="Product Code">
-              {productCodeManual ? (
-                <Input
-                  value={form.productCode}
-                  onChange={(e) =>
-                    setForm({ ...form, productCode: e.target.value })
-                  }
-                  placeholder="Enter product code"
-                />
-              ) : (
-                <Select
-                  value={form.productCode}
-                  onChange={(e) => {
-                    if (e.target.value === "__manual__") {
-                      setProductCodeManual(true);
-                      setForm({ ...form, productCode: "" });
-                    } else {
-                      const product = products.find(
-                        (item) => item.productCode === e.target.value,
-                      );
-                      setForm({
-                        ...form,
-                        productCode: e.target.value,
-                        purchasePrice:
-                          product?.purchasePrice != null
-                            ? String(product.purchasePrice)
-                            : "",
-                      });
-                    }
-                  }}
-                >
-                  <option value="">Select product code</option>
-                  {products.map((p) => (
-                    <option key={p.id} value={p.productCode}>
-                      {p.productCode}
-                    </option>
-                  ))}
-                  <option value="__manual__">Other (Manual Entry)</option>
-                </Select>
-              )}
-            </FormField>
             <FormField label="Invoice Date" required>
               <Input
                 required
@@ -459,43 +426,6 @@ export const PurchaseMaster = () => {
                   setForm({ ...form, invoiceDate: e.target.value })
                 }
               />
-            </FormField>
-            <FormField label="Purchase Price" required>
-              <Input
-                required
-                min="0"
-                type="number"
-                value={form.purchasePrice}
-                onChange={(e) =>
-                  setForm({ ...form, purchasePrice: e.target.value })
-                }
-              />
-            </FormField>
-            <FormField label="Paid Amount" required>
-              <Input
-                required
-                type="number"
-                value={form.paidAmount}
-                onChange={(e) =>
-                  setForm({ ...form, paidAmount: e.target.value })
-                }
-              />
-            </FormField>
-            <FormField label="Payment Status">
-              <Select
-                value={form.paymentStatus}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    paymentStatus: e.target.value as PaymentStatus,
-                  })
-                }
-              >
-                <option value="UNPAID">Unpaid</option>
-                <option value="PARTIAL">Partial</option>
-                <option value="PAID">Paid</option>
-                <option value="OVERDUE">Overdue</option>
-              </Select>
             </FormField>
             <FormField label="Remarks">
               <Input
@@ -514,6 +444,65 @@ export const PurchaseMaster = () => {
                 <option value="INACTIVE">Inactive</option>
               </Select>
             </FormField>
+          </div>
+
+          <div className="rounded-lg border border-border-gold p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <p className="font-semibold text-secondary">Purchased Products</p>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setForm({ ...form, productCodes: [...form.productCodes, ""] })}
+              >
+                + Add Product
+              </Button>
+            </div>
+            <div className="space-y-3">
+              {form.productCodes.map((productCode, index) => {
+                const product = products.find((item) => item.productCode === productCode);
+                const total = (Number(product?.quantity) || 0)
+                  * (product?.unit === "DOZEN" ? 12 : 1)
+                  * (Number(product?.purchasePrice) || 0);
+                return (
+                  <div key={`${index}-${productCode}`} className="grid items-end gap-3 sm:grid-cols-[minmax(0,2fr)_minmax(0,2fr)_1fr_1fr_1fr_auto]">
+                    <FormField label={`Product Code ${index + 1}`} required>
+                      <Select
+                        required
+                        value={productCode}
+                        onChange={(e) => {
+                          const productCodes = [...form.productCodes];
+                          productCodes[index] = e.target.value;
+                          setForm({ ...form, productCodes });
+                        }}
+                      >
+                        <option value="">Select product code</option>
+                        {products.map((item) => <option key={item.id} value={item.productCode}>{item.productCode}</option>)}
+                      </Select>
+                    </FormField>
+                    <FormField label="Product Name"><Input readOnly value={product?.productName ?? ""} /></FormField>
+                    <FormField label="Purchase Price"><Input readOnly value={product?.purchasePrice ?? ""} /></FormField>
+                    <FormField label="Quantity"><Input readOnly value={product?.quantity ?? ""} /></FormField>
+                    <FormField label="Total"><Input readOnly value={product ? total : ""} /></FormField>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={form.productCodes.length === 1}
+                      onClick={() => setForm({ ...form, productCodes: form.productCodes.filter((_, itemIndex) => itemIndex !== index) })}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="mt-3 text-right font-semibold text-secondary">
+              Net Total Purchase Amount: ₹{form.productCodes.reduce((sum, productCode) => {
+                const product = products.find((item) => item.productCode === productCode);
+                return sum + (Number(product?.quantity) || 0)
+                  * (product?.unit === "DOZEN" ? 12 : 1)
+                  * (Number(product?.purchasePrice) || 0);
+              }, 0)}
+            </p>
           </div>
 
           <div className="flex justify-end gap-3">
@@ -645,7 +634,7 @@ export const PurchaseMaster = () => {
                     Product Code
                   </td>
                   <td className="px-4 py-2 text-secondary">
-                    {viewing.productCode || "—"}
+                    <div className="space-y-1">{viewing.items.map((item) => <div key={item.id}>{item.productCode} — {item.productName || "—"}</div>)}</div>
                   </td>
                 </tr>
                 <tr>
@@ -661,9 +650,22 @@ export const PurchaseMaster = () => {
                     Purchase Price
                   </td>
                   <td className="px-4 py-2 text-secondary">
-                    ₹{viewing.purchasePrice}
+                    <div className="space-y-1">{viewing.items.map((item) => <div key={item.id}>₹{item.purchasePrice}</div>)}</div>
                   </td>
                 </tr>
+                <tr>
+                  <td className="px-4 py-2 font-semibold text-text-secondary">Quantity</td>
+                  <td className="px-4 py-2 text-secondary"><div className="space-y-1">{viewing.items.map((item) => <div key={item.id}>{item.quantity}</div>)}</div></td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-2 font-semibold text-text-secondary">
+                    Total Purchase Amount
+                  </td>
+                  <td className="px-4 py-2 text-secondary">
+                    <div className="space-y-1">{viewing.items.map((item) => <div key={item.id}>₹{item.totalPurchaseAmount}</div>)}</div>
+                  </td>
+                </tr>
+                <tr><td className="px-4 py-2 font-semibold text-text-secondary">Net Total Purchase Amount</td><td className="px-4 py-2 text-secondary">₹{viewing.netTotalPurchaseAmount}</td></tr>
                 <tr>
                   <td className="px-4 py-2 font-semibold text-text-secondary">
                     Paid Amount
@@ -674,10 +676,10 @@ export const PurchaseMaster = () => {
                 </tr>
                 <tr>
                   <td className="px-4 py-2 font-semibold text-text-secondary">
-                    Remaining Balance
+                    Remaining Amount
                   </td>
                   <td className="px-4 py-2 text-secondary">
-                    ₹{viewing.remainingBalance}
+                    ₹{viewing.remainingAmount}
                   </td>
                 </tr>
                 <tr>

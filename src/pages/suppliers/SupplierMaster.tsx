@@ -12,6 +12,8 @@ import {
 import { supplierApi } from "../../services/supplier.api";
 import type { Supplier } from "../../types/product.types";
 
+type PaymentStatus = Supplier["paymentStatus"];
+
 type FormState = {
   name: string;
   mobile: string;
@@ -21,6 +23,8 @@ type FormState = {
   state: string;
   country: string;
   pincode: string;
+  paidAmount: string;
+  paymentStatus: PaymentStatus;
   status: boolean;
 };
 
@@ -33,6 +37,8 @@ const emptyForm: FormState = {
   state: "",
   country: "",
   pincode: "",
+  paidAmount: "0",
+  paymentStatus: "UNPAID",
   status: true,
 };
 
@@ -110,6 +116,8 @@ export const SupplierMaster = () => {
       state: row.state,
       country: row.country,
       pincode: row.pincode,
+      paidAmount: String(row.paidAmount),
+      paymentStatus: row.paymentStatus,
       status: row.status,
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -131,6 +139,8 @@ export const SupplierMaster = () => {
         state: form.state,
         country: form.country,
         pincode: form.pincode,
+        paidAmount: Number(form.paidAmount) || 0,
+        paymentStatus: form.paymentStatus,
         status: form.status,
       };
 
@@ -177,6 +187,10 @@ export const SupplierMaster = () => {
     { key: "email", header: "Email" },
     { key: "city", header: "City" },
     { key: "state", header: "State" },
+    { key: "netTotalPurchaseAmount", header: "Net Total Purchase", cell: (row) => `₹${row.netTotalPurchaseAmount}` },
+    { key: "paidAmount", header: "Paid Amount", cell: (row) => `₹${row.paidAmount}` },
+    { key: "remainingAmount", header: "Remaining Amount", cell: (row) => `₹${row.remainingAmount}` },
+    { key: "paymentStatus", header: "Payment Status" },
     {
       key: "status",
       header: "Status",
@@ -291,6 +305,25 @@ export const SupplierMaster = () => {
                   })
                 }
               />
+            </FormField>
+            <FormField label="Paid Amount">
+              <Input
+                min="0"
+                type="number"
+                value={form.paidAmount}
+                onChange={(e) => setForm({ ...form, paidAmount: e.target.value })}
+              />
+            </FormField>
+            <FormField label="Payment Status">
+              <Select
+                value={form.paymentStatus}
+                onChange={(e) => setForm({ ...form, paymentStatus: e.target.value as PaymentStatus })}
+              >
+                <option value="UNPAID">Unpaid</option>
+                <option value="PARTIAL">Partial</option>
+                <option value="PAID">Paid</option>
+                <option value="OVERDUE">Overdue</option>
+              </Select>
             </FormField>
             <FormField label="Status">
               <Select
@@ -437,6 +470,22 @@ export const SupplierMaster = () => {
                   <td className="px-4 py-2 text-secondary">
                     {viewing.pincode}
                   </td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-2 font-semibold text-text-secondary">Net Total Purchase Amount</td>
+                  <td className="px-4 py-2 text-secondary">₹{viewing.netTotalPurchaseAmount}</td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-2 font-semibold text-text-secondary">Paid Amount</td>
+                  <td className="px-4 py-2 text-secondary">₹{viewing.paidAmount}</td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-2 font-semibold text-text-secondary">Remaining Amount</td>
+                  <td className="px-4 py-2 text-secondary">₹{viewing.remainingAmount}</td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-2 font-semibold text-text-secondary">Payment Status</td>
+                  <td className="px-4 py-2 text-secondary">{viewing.paymentStatus}</td>
                 </tr>
                 <tr>
                   <td className="px-4 py-2 font-semibold text-text-secondary">

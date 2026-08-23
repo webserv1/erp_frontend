@@ -79,6 +79,7 @@ export const Products = () => {
   const sizeOptions: Size[] = selectedCategory?.sizes ?? [];
   const totalPurchaseAmount =
     Math.max(0, Number(form.quantity) || 0) *
+    (form.unit === "DOZEN" ? 12 : 1) *
     Math.max(0, Number(form.purchasePrice) || 0);
 
   const location = useLocation();

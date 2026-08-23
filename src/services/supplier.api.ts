@@ -1,7 +1,7 @@
 import type { ApiError } from '../types/auth.types'
 import type { Supplier, SupplierListResponse } from '../types/product.types'
 
-type SupplierPayload = Omit<Supplier, 'id' | 'companyId' | 'createdAt' | 'updatedAt'>
+type SupplierPayload = Pick<Supplier, 'name' | 'mobile' | 'email' | 'address' | 'city' | 'state' | 'country' | 'pincode' | 'paidAmount' | 'paymentStatus' | 'status'>
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 

@@ -1,7 +1,15 @@
 import type { ApiError } from '../types/auth.types'
 import type { Purchase, PurchaseListResponse } from '../types/product.types'
 
-type PurchasePayload = Omit<Purchase, 'id' | 'companyId' | 'createdById' | 'createdAt' | 'updatedAt' | 'remainingBalance'>
+type PurchasePayload = {
+  purchaseNumber: string
+  supplierId: number
+  supplierName?: string
+  invoiceDate: string
+  items: { productCode: string; remarks?: string }[]
+  remarks?: string
+  status: boolean
+}
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 
