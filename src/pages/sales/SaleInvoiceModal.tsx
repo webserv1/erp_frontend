@@ -16,6 +16,7 @@ const currency = (value: number) =>
     currency: "INR",
     maximumFractionDigits: 2,
   }).format(value);
+const unitMultiplier = (unit: "PIECES" | "DOZEN") => (unit === "DOZEN" ? 12 : 1);
 
 export const SaleInvoiceModal = ({
   invoice,
@@ -24,6 +25,28 @@ export const SaleInvoiceModal = ({
   if (!invoice) return null;
 
   const { sale } = invoice;
+  const saleItems =
+    sale.items?.length > 0
+      ? sale.items
+      : [
+          {
+            id: sale.id,
+            productCode: sale.productCode,
+            productName: sale.productName,
+            quantity: sale.quantity,
+            unit: sale.unit,
+            salePrice: sale.salePrice,
+            totalSalePrice:
+              sale.totalSalePrice ||
+              sale.quantity * unitMultiplier(sale.unit) * sale.salePrice,
+            brands: sale.brands,
+            colors: sale.colors,
+            sizes: sale.sizes,
+          },
+        ];
+  const netTotalSalePrice =
+    sale.netTotalSalePrice ||
+    saleItems.reduce((sum, item) => sum + item.totalSalePrice, 0);
   const date = new Date(invoice.issueDate).toLocaleDateString("en-IN", {
     day: "2-digit",
     month: "short",
@@ -61,23 +84,31 @@ export const SaleInvoiceModal = ({
     pdf.setFontSize(9);
     pdf.text("PRODUCT", left + 4, y + 6);
     pdf.text("VARIANTS", left + 65, y + 6);
-    pdf.text("QTY", left + 128, y + 6);
-    pdf.text("SALE PRICE", left + 145, y + 6);
-    y += 15;
-    const variantLines = pdf.splitTextToSize(
-      `Brand: ${names(sale.brands)}\nColor: ${names(sale.colors)}\nSize: ${names(sale.sizes)}`,
-      58,
-    );
-    pdf.setFontSize(9);
-    pdf.text(`${sale.productName} (${sale.productCode})`, left + 4, y);
-    pdf.text(variantLines, left + 65, y);
-    pdf.text(`${sale.quantity} ${sale.unit}`, left + 128, y);
-    pdf.text(currency(sale.salePrice), left + 145, y);
-    y += Math.max(14, variantLines.length * 4 + 5);
+    pdf.text("QTY", left + 115, y + 6);
+    pdf.text("SALE PRICE", left + 132, y + 6);
+    pdf.text("TOTAL", left + 160, y + 6);
+    y += 13;
+    pdf.setFontSize(8.5);
+    saleItems.forEach((item) => {
+      const variantLines = pdf.splitTextToSize(
+        `Brand: ${names(item.brands)}\nColor: ${names(item.colors)}\nSize: ${names(item.sizes)}`,
+        42,
+      );
+      pdf.text(`${item.productName} (${item.productCode})`, left + 4, y);
+      pdf.text(variantLines, left + 65, y);
+      pdf.text(`${item.quantity} ${item.unit}`, left + 115, y);
+      pdf.text(currency(item.salePrice), left + 132, y);
+      pdf.text(currency(item.totalSalePrice), left + 160, y);
+      y += Math.max(12, variantLines.length * 4 + 4);
+      pdf.setDrawColor(229, 231, 235);
+      pdf.line(left, y, left + 174, y);
+      y += 4;
+    });
     pdf.setDrawColor(229, 231, 235);
-    pdf.line(left, y, left + 174, y);
-    y += 10;
+    y += 6;
     pdf.setFontSize(10);
+    pdf.text(`Net Total Sale Price: ${currency(netTotalSalePrice)}`, left, y);
+    y += 7;
     pdf.text(`Paid Amount: ${currency(sale.paidAmount)}`, left, y);
     pdf.text(`Payment Status: ${sale.paymentStatus}`, left + 90, y);
     y += 12;
@@ -150,32 +181,44 @@ export const SaleInvoiceModal = ({
                     <th className="px-4 py-3">Size</th>
                     <th className="px-4 py-3">Quantity</th>
                     <th className="px-4 py-3 text-right">Sale Price</th>
+                    <th className="px-4 py-3 text-right">Total Sale Price</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr className="border-b border-gray-200">
-                    <td className="px-4 py-4">
-                      <p className="font-semibold text-secondary">
-                        {sale.productName}
-                      </p>
-                      <p className="text-xs text-text-secondary">
-                        {sale.productCode}
-                      </p>
-                    </td>
-                    <td className="px-4 py-4">{names(sale.brands)}</td>
-                    <td className="px-4 py-4">{names(sale.colors)}</td>
-                    <td className="px-4 py-4">{names(sale.sizes)}</td>
-                    <td className="px-4 py-4">
-                      {sale.quantity} {sale.unit}
-                    </td>
-                    <td className="px-4 py-4 text-right font-semibold">
-                      {currency(sale.salePrice)}
-                    </td>
-                  </tr>
+                  {saleItems.map((item) => (
+                    <tr key={item.id} className="border-b border-gray-200">
+                      <td className="px-4 py-4">
+                        <p className="font-semibold text-secondary">
+                          {item.productName}
+                        </p>
+                        <p className="text-xs text-text-secondary">
+                          {item.productCode}
+                        </p>
+                      </td>
+                      <td className="px-4 py-4">{names(item.brands)}</td>
+                      <td className="px-4 py-4">{names(item.colors)}</td>
+                      <td className="px-4 py-4">{names(item.sizes)}</td>
+                      <td className="px-4 py-4">
+                        {item.quantity} {item.unit}
+                      </td>
+                      <td className="px-4 py-4 text-right font-semibold">
+                        {currency(item.salePrice)}
+                      </td>
+                      <td className="px-4 py-4 text-right font-semibold">
+                        {currency(item.totalSalePrice)}
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </section>
             <section className="ml-auto mt-6 max-w-sm space-y-2 border-t border-gray-200 pt-4 text-sm">
+              <div className="flex justify-between">
+                <span className="text-text-secondary">Net Total Sale Price</span>
+                <span className="font-semibold">
+                  {currency(netTotalSalePrice)}
+                </span>
+              </div>
               <div className="flex justify-between">
                 <span className="text-text-secondary">Paid Amount</span>
                 <span className="font-semibold">

@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { ArrowLeft, Eye, FileText, Pencil, Search, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast, Button, Card, Modal } from "../../components/ui";
-import { FormField, Input, MultiSelect, Select } from "../../components/forms";
+import { FormField, Input, Select } from "../../components/forms";
 import {
   DataTable,
   type DataTableAction,
@@ -20,11 +20,14 @@ import type { Party, Product, Sale } from "../../types/product.types";
 import { SaleInvoiceModal } from "./SaleInvoiceModal";
 import { useAuth } from "../../hooks/useAuth";
 
-type Form = {
+type SaleLineForm = {
+  rowId: string;
+  productId?: number;
   productCode: string;
   productName: string;
-  partyId: string;
-  partyName: string;
+  brands: { id: number; name: string }[];
+  colors: { id: number; name: string }[];
+  sizes: { id: number; name: string }[];
   supplierId: string;
   supplierName: string;
   brandIds: number[];
@@ -34,38 +37,104 @@ type Form = {
   unit: "PIECES" | "DOZEN";
   purchasePrice: string;
   salePrice: string;
+};
+
+type Form = {
+  saleNumber: string;
+  partyId: string;
+  partyName: string;
   paidAmount: string;
   paymentStatus: "UNPAID" | "PARTIAL" | "PAID" | "OVERDUE";
+  remarks: string;
   status: boolean;
+  lines: SaleLineForm[];
 };
-const empty: Form = {
+
+const createLine = (): SaleLineForm => ({
+  rowId: `${Date.now()}-${Math.random()}`,
   productCode: "",
   productName: "",
-  partyId: "",
-  partyName: "",
+  brands: [],
+  colors: [],
+  sizes: [],
   supplierId: "",
   supplierName: "",
   brandIds: [],
   colorIds: [],
   sizeIds: [],
-  quantity: "",
+  quantity: "1",
   unit: "PIECES",
-  purchasePrice: "",
-  salePrice: "",
+  purchasePrice: "0",
+  salePrice: "0",
+});
+
+const empty: Form = {
+  saleNumber: "",
+  partyId: "",
+  partyName: "",
   paidAmount: "0",
   paymentStatus: "UNPAID",
+  remarks: "",
   status: true,
+  lines: [createLine()],
 };
+
+const unitMultiplier = (unit: "PIECES" | "DOZEN") => (unit === "DOZEN" ? 12 : 1);
+const numberOrZero = (value: string | number) => Number(value) || 0;
 const names = (items: { name: string }[]) =>
   items.map((item) => item.name).join(", ") || "—";
+
+const lineTotal = (line: SaleLineForm) =>
+  numberOrZero(line.quantity) * unitMultiplier(line.unit) * numberOrZero(line.salePrice);
+
+const getSaleLines = (sale: Sale): SaleLineForm[] =>
+  sale.items?.length
+    ? sale.items.map((item) => ({
+        rowId: String(item.id),
+        productId: item.productId,
+        productCode: item.productCode,
+        productName: item.productName,
+        brands: item.brands || [],
+        colors: item.colors || [],
+        sizes: item.sizes || [],
+        supplierId: item.supplierId ? String(item.supplierId) : "",
+        supplierName: item.supplierName || "",
+        brandIds: item.brandIds || [],
+        colorIds: item.colorIds || [],
+        sizeIds: item.sizeIds || [],
+        quantity: String(item.quantity || 0),
+        unit: item.unit || "PIECES",
+        purchasePrice: String(item.purchasePrice || 0),
+        salePrice: String(item.salePrice || 0),
+      }))
+    : [
+        {
+          rowId: String(sale.id),
+          productId: sale.productId,
+          productCode: sale.productCode,
+          productName: sale.productName,
+          brands: sale.brands || [],
+          colors: sale.colors || [],
+          sizes: sale.sizes || [],
+          supplierId: sale.supplierId ? String(sale.supplierId) : "",
+          supplierName: sale.supplierName || "",
+          brandIds: sale.brandIds || [],
+          colorIds: sale.colorIds || [],
+          sizeIds: sale.sizeIds || [],
+          quantity: String(sale.quantity || 0),
+          unit: sale.unit || "PIECES",
+          purchasePrice: String(sale.purchasePrice || 0),
+          salePrice: String(sale.salePrice || 0),
+        },
+      ];
 
 export const Sales = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
   const isAdmin = user?.role.name === "ADMIN";
+
   const [form, setForm] = useState<Form>(empty);
-  const [details, setDetails] = useState<ProductDetails | null>(null);
   const [editing, setEditing] = useState<Sale | null>(null);
   const [viewing, setViewing] = useState<Sale | null>(null);
   const [invoice, setInvoice] = useState<Awaited<
@@ -74,16 +143,25 @@ export const Sales = () => {
   const [items, setItems] = useState<Sale[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [parties, setParties] = useState<Party[]>([]);
+  const [productDetails, setProductDetails] = useState<
+    Record<string, ProductDetails>
+  >({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [lookupError, setLookupError] = useState("");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(5);
+
+  const netTotalSalePrice = useMemo(
+    () => form.lines.reduce((sum, line) => sum + lineTotal(line), 0),
+    [form.lines],
+  );
+
   const loadSales = async (term = search) => {
     const data = await saleApi.list({ search: term || undefined });
     setItems(data.sale);
   };
+
   useEffect(() => {
     Promise.all([
       saleApi.list(),
@@ -104,6 +182,7 @@ export const Sales = () => {
       )
       .finally(() => setLoading(false));
   }, [toast]);
+
   useEffect(() => {
     const id = window.setTimeout(() => {
       loadSales().catch((error) =>
@@ -116,112 +195,162 @@ export const Sales = () => {
     }, 250);
     return () => window.clearTimeout(id);
   }, [search, toast]);
+
   const reset = () => {
-    setForm(empty);
-    setDetails(null);
+    setForm({ ...empty, lines: [createLine()] });
     setEditing(null);
-    setLookupError("");
   };
-  const selectProduct = async (code: string) => {
-    setLookupError("");
-    setDetails(null);
-    setForm((current) => ({ ...current, productCode: code }));
-    if (!code) return;
+
+  const setLine = (rowId: string, updater: (line: SaleLineForm) => SaleLineForm) => {
+    setForm((current) => ({
+      ...current,
+      lines: current.lines.map((line) => (line.rowId === rowId ? updater(line) : line)),
+    }));
+  };
+
+  const selectProduct = async (rowId: string, code: string) => {
+    setLine(rowId, (line) => ({ ...line, productCode: code }));
+    if (!code) {
+      setLine(rowId, (line) => ({
+        ...line,
+        productId: undefined,
+        productCode: "",
+        productName: "",
+        brands: [],
+        colors: [],
+        sizes: [],
+        supplierId: "",
+        supplierName: "",
+        brandIds: [],
+        colorIds: [],
+        sizeIds: [],
+        quantity: "1",
+        unit: "PIECES",
+        purchasePrice: "0",
+        salePrice: "0",
+      }));
+      return;
+    }
     try {
-      const result = await saleApi.productDetails(code);
-      setDetails(result);
-      setForm((current) => ({
-        ...current,
-        productCode: result.product.productCode,
-        productName: result.product.productName,
-        supplierId: result.supplier ? String(result.supplier.id) : "",
-        supplierName: result.supplier?.name || "",
-        brandIds: result.product.brandIds,
-        colorIds: result.product.colorIds,
-        sizeIds: result.product.sizeIds,
-        quantity: result.product.quantity
-          ? String(result.product.quantity)
-          : "",
-        unit: result.product.unit,
+      const cached = productDetails[code];
+      const details = cached || (await saleApi.productDetails(code));
+      if (!cached) {
+        setProductDetails((current) => ({ ...current, [code]: details }));
+      }
+      setLine(rowId, (line) => ({
+        ...line,
+        productId: details.product.id,
+        productCode: details.product.productCode,
+        productName: details.product.productName,
+        brands: details.product.brands,
+        colors: details.product.colors,
+        sizes: details.product.sizes,
+        supplierId: details.supplier ? String(details.supplier.id) : "",
+        supplierName: details.supplier?.name || "",
+        brandIds: details.product.brandIds,
+        colorIds: details.product.colorIds,
+        sizeIds: details.product.sizeIds,
+        quantity:
+          details.product.quantity && details.product.quantity > 0
+            ? String(details.product.quantity)
+            : line.quantity || "1",
+        unit: details.product.unit,
         purchasePrice:
-          result.product.purchasePrice !== null
-            ? String(result.product.purchasePrice)
-            : "",
+          details.product.purchasePrice !== null
+            ? String(details.product.purchasePrice)
+            : "0",
       }));
     } catch (error) {
-      setLookupError(
-        (error as Error).message || "Product details could not be loaded.",
-      );
+      toast({
+        title: "Product details could not be loaded",
+        description: (error as Error).message,
+        variant: "error",
+      });
+      setLine(rowId, (line) => ({
+        ...line,
+        productId: undefined,
+        productCode: "",
+        productName: "",
+        brands: [],
+        colors: [],
+        sizes: [],
+        supplierId: "",
+        supplierName: "",
+        brandIds: [],
+        colorIds: [],
+        sizeIds: [],
+        quantity: "1",
+        unit: "PIECES",
+        purchasePrice: "0",
+        salePrice: "0",
+      }));
     }
   };
+
   const edit = (sale: Sale) => {
+    const lines = getSaleLines(sale);
     setEditing(sale);
-    setDetails({
-      product: {
-        id: 0,
-        productCode: sale.productCode,
-        productName: sale.productName,
-        quantity: sale.quantity,
-        unit: sale.unit,
-        purchasePrice: sale.purchasePrice,
-        brandIds: sale.brandIds,
-        colorIds: sale.colorIds,
-        sizeIds: sale.sizeIds,
-        brands: sale.brands,
-        colors: sale.colors,
-        sizes: sale.sizes,
-      },
-      supplier: sale.supplierId
-        ? { id: sale.supplierId, name: sale.supplierName || "" }
-        : null,
-    });
     setForm({
-      productCode: sale.productCode,
-      productName: sale.productName,
+      saleNumber: sale.saleNumber || "",
       partyId: sale.partyId ? String(sale.partyId) : "",
       partyName: sale.partyName || "",
-      supplierId: sale.supplierId ? String(sale.supplierId) : "",
-      supplierName: sale.supplierName || "",
-      brandIds: sale.brandIds,
-      colorIds: sale.colorIds,
-      sizeIds: sale.sizeIds,
-      quantity: String(sale.quantity),
-      unit: sale.unit,
-      purchasePrice: String(sale.purchasePrice),
-      salePrice: String(sale.salePrice),
-      paidAmount: String(sale.paidAmount),
+      paidAmount: String(sale.paidAmount || 0),
       paymentStatus: sale.paymentStatus,
+      remarks: sale.remarks || "",
       status: sale.status,
+      lines,
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
   const submit = async (event: FormEvent) => {
     event.preventDefault();
-    if (!details || !form.colorIds.length || !form.sizeIds.length) {
+
+    if (!form.partyId) {
+      toast({ title: "Please select a party", variant: "error" });
+      return;
+    }
+
+    const invalidLine = form.lines.find(
+      (line) =>
+        !line.productCode ||
+        numberOrZero(line.quantity) <= 0 ||
+        numberOrZero(line.salePrice) <= 0,
+    );
+    if (invalidLine) {
       toast({
-        title: "Select a product and its color and size",
+        title: "Each product row needs product code, quantity and sale price",
         variant: "error",
       });
       return;
     }
+
     const payload: SalePayload = {
-      productCode: form.productCode,
-      productName: form.productName,
-      partyId: form.partyId ? Number(form.partyId) : undefined,
+      saleNumber: form.saleNumber || undefined,
+      partyId: Number(form.partyId),
       partyName: form.partyName || undefined,
-      supplierId: form.supplierId ? Number(form.supplierId) : undefined,
-      supplierName: form.supplierName || undefined,
-      brandIds: form.brandIds,
-      colorIds: form.colorIds,
-      sizeIds: form.sizeIds,
-      quantity: Number(form.quantity),
-      unit: form.unit,
-      purchasePrice: Number(form.purchasePrice),
-      salePrice: Number(form.salePrice),
-      paidAmount: Number(form.paidAmount),
+      items: form.lines.map((line) => ({
+        productId: line.productId,
+        productName: line.productName,
+        productCode: line.productCode,
+        supplierId: line.supplierId ? Number(line.supplierId) : undefined,
+        supplierName: line.supplierName || undefined,
+        brandIds: line.brandIds,
+        colorIds: line.colorIds,
+        sizeIds: line.sizeIds,
+        quantity: numberOrZero(line.quantity),
+        unit: line.unit,
+        salePrice: numberOrZero(line.salePrice),
+        purchasePrice: numberOrZero(line.purchasePrice),
+        totalSalePrice: lineTotal(line),
+      })),
+      netTotalSalePrice,
+      paidAmount: numberOrZero(form.paidAmount),
       paymentStatus: form.paymentStatus,
+      remarks: form.remarks || undefined,
       status: form.status,
     };
+
     try {
       setSaving(true);
       const response = editing
@@ -250,6 +379,7 @@ export const Sales = () => {
       setSaving(false);
     }
   };
+
   const openInvoice = async (sale: Sale) => {
     try {
       setInvoice(await saleApi.invoice(sale.id));
@@ -261,36 +391,121 @@ export const Sales = () => {
       });
     }
   };
+
   const columns: DataTableColumn<Sale>[] = [
-    { key: "productCode", header: "Product Code" },
-    { key: "productName", header: "Product Name" },
+    {
+      key: "productCode",
+      header: "Product Code",
+      cell: (sale) => (
+        <div className="space-y-1">
+          {(sale.items?.length ? sale.items : []).map((item) => (
+            <div key={item.id}>{item.productCode}</div>
+          ))}
+          {!sale.items?.length && <div>{sale.productCode}</div>}
+        </div>
+      ),
+    },
+    {
+      key: "productName",
+      header: "Product Name",
+      cell: (sale) => (
+        <div className="space-y-1">
+          {(sale.items?.length ? sale.items : []).map((item) => (
+            <div key={item.id}>{item.productName}</div>
+          ))}
+          {!sale.items?.length && <div>{sale.productName}</div>}
+        </div>
+      ),
+    },
     {
       key: "partyName",
       header: "Party Name",
       cell: (sale) => sale.partyName || sale.party?.partyName || "-",
     },
     {
-      key: "supplierName",
-      header: "Supplier",
-      cell: (sale) => sale.supplierName || "—",
+      key: "brand",
+      header: "Brand",
+      cell: (sale) => (
+        <div className="space-y-1">
+          {(sale.items?.length ? sale.items : []).map((item) => (
+            <div key={item.id}>{names(item.brands)}</div>
+          ))}
+          {!sale.items?.length && <div>{names(sale.brands)}</div>}
+        </div>
+      ),
     },
-    { key: "brand", header: "Brand", cell: (sale) => names(sale.brands) },
-    { key: "color", header: "Color", cell: (sale) => names(sale.colors) },
-    { key: "size", header: "Size", cell: (sale) => names(sale.sizes) },
+    {
+      key: "color",
+      header: "Color",
+      cell: (sale) => (
+        <div className="space-y-1">
+          {(sale.items?.length ? sale.items : []).map((item) => (
+            <div key={item.id}>{names(item.colors)}</div>
+          ))}
+          {!sale.items?.length && <div>{names(sale.colors)}</div>}
+        </div>
+      ),
+    },
+    {
+      key: "size",
+      header: "Size",
+      cell: (sale) => (
+        <div className="space-y-1">
+          {(sale.items?.length ? sale.items : []).map((item) => (
+            <div key={item.id}>{names(item.sizes)}</div>
+          ))}
+          {!sale.items?.length && <div>{names(sale.sizes)}</div>}
+        </div>
+      ),
+    },
     {
       key: "quantity",
       header: "Quantity",
-      cell: (sale) => `${sale.quantity} ${sale.unit}`,
-    },
-    {
-      key: "purchasePrice",
-      header: "Purchase Price",
-      cell: (sale) => `₹${sale.purchasePrice}`,
+      cell: (sale) => (
+        <div className="space-y-1">
+          {(sale.items?.length ? sale.items : []).map((item) => (
+            <div key={item.id}>
+              {item.quantity} {item.unit}
+            </div>
+          ))}
+          {!sale.items?.length && (
+            <div>
+              {sale.quantity} {sale.unit}
+            </div>
+          )}
+        </div>
+      ),
     },
     {
       key: "salePrice",
       header: "Sale Price",
-      cell: (sale) => `₹${sale.salePrice}`,
+      cell: (sale) => (
+        <div className="space-y-1">
+          {(sale.items?.length ? sale.items : []).map((item) => (
+            <div key={item.id}>₹{item.salePrice}</div>
+          ))}
+          {!sale.items?.length && <div>₹{sale.salePrice}</div>}
+        </div>
+      ),
+    },
+    {
+      key: "totalSalePrice",
+      header: "Total Sale Price",
+      cell: (sale) => (
+        <div className="space-y-1">
+          {(sale.items?.length ? sale.items : []).map((item) => (
+            <div key={item.id}>₹{item.totalSalePrice}</div>
+          ))}
+          {!sale.items?.length && <div>₹{sale.totalSalePrice || 0}</div>}
+        </div>
+      ),
+    },
+    {
+      key: "netTotalSalePrice",
+      header: "Net Total Sale Price",
+      cell: (sale) => (
+        <span className="font-semibold">₹{sale.netTotalSalePrice || 0}</span>
+      ),
     },
     {
       key: "paidAmount",
@@ -313,6 +528,7 @@ export const Sales = () => {
         ]
       : []),
   ];
+
   const actions: DataTableAction<Sale>[] = [
     { label: <Eye size={16} />, onClick: setViewing, title: "View" },
     {
@@ -331,7 +547,9 @@ export const Sales = () => {
       className: "text-red-600 hover:bg-red-50",
     },
   ];
+
   const rows = items.slice((page - 1) * limit, page * limit);
+
   return (
     <>
       <div className="mb-6 flex items-center justify-between">
@@ -359,39 +577,26 @@ export const Sales = () => {
           + Add Sale
         </Button>
       </div>
+
       <Card className="mb-6 p-6">
         <form onSubmit={submit} className="space-y-5">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <FormField label="Product Code" required error={lookupError}>
+            <FormField label="Sale Number">
+              <Input
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={form.saleNumber}
+                onChange={(event) =>
+                  setForm((current) => ({
+                    ...current,
+                    saleNumber: event.target.value.replace(/\D/g, ""),
+                  }))
+                }
+              />
+            </FormField>
+            <FormField label="Party" required>
               <Select
                 required
-                value={form.productCode}
-                onChange={(event) => void selectProduct(event.target.value)}
-              >
-                <option value="">Select product code</option>
-                {products.map((product) => (
-                  <option key={product.id} value={product.productCode}>
-                    {product.productCode}
-                  </option>
-                ))}
-              </Select>
-            </FormField>
-            <FormField label="Product Name">
-              <Input
-                readOnly
-                value={form.productName}
-                placeholder="Auto-filled"
-              />
-            </FormField>
-            <FormField label="Supplier Name">
-              <Input
-                readOnly
-                value={form.supplierName}
-                placeholder="Auto-filled from purchase"
-              />
-            </FormField>
-            <FormField label="Party">
-              <Select
                 value={form.partyId}
                 onChange={(event) => {
                   const party = parties.find(
@@ -411,105 +616,6 @@ export const Sales = () => {
                   </option>
                 ))}
               </Select>
-            </FormField>
-            <FormField label="Brand">
-              <MultiSelect
-                options={details?.product.brands || []}
-                value={form.brandIds}
-                onChange={(value) =>
-                  setForm((current) => ({
-                    ...current,
-                    brandIds: value.map(Number),
-                  }))
-                }
-                disabled={!details}
-                placeholder="Fetched from product"
-              />
-            </FormField>
-            <FormField label="Color" required>
-              <MultiSelect
-                options={details?.product.colors || []}
-                value={form.colorIds}
-                onChange={(value) =>
-                  setForm((current) => ({
-                    ...current,
-                    colorIds: value.map(Number),
-                  }))
-                }
-                disabled={!details}
-                placeholder="Fetched from product"
-              />
-            </FormField>
-            <FormField label="Size" required>
-              <MultiSelect
-                options={details?.product.sizes || []}
-                value={form.sizeIds}
-                onChange={(value) =>
-                  setForm((current) => ({
-                    ...current,
-                    sizeIds: value.map(Number),
-                  }))
-                }
-                disabled={!details}
-                placeholder="Fetched from product"
-              />
-            </FormField>
-            <FormField label="Quantity" required>
-              <div className="flex gap-2">
-                <Input
-                  required
-                  min="1"
-                  type="number"
-                  value={form.quantity}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      quantity: event.target.value,
-                    }))
-                  }
-                />
-                <Select
-                  value={form.unit}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      unit: event.target.value as Form["unit"],
-                    }))
-                  }
-                  className="w-28"
-                >
-                  <option value="PIECES">Pieces</option>
-                  <option value="DOZEN">Dozen</option>
-                </Select>
-              </div>
-            </FormField>
-            <FormField label="Purchase Price" required>
-              <Input
-                required
-                min="0"
-                type="number"
-                value={form.purchasePrice}
-                onChange={(event) =>
-                  setForm((current) => ({
-                    ...current,
-                    purchasePrice: event.target.value,
-                  }))
-                }
-              />
-            </FormField>
-            <FormField label="Sale Price" required>
-              <Input
-                required
-                min="0"
-                type="number"
-                value={form.salePrice}
-                onChange={(event) =>
-                  setForm((current) => ({
-                    ...current,
-                    salePrice: event.target.value,
-                  }))
-                }
-              />
             </FormField>
             <FormField label="Paid Amount" required>
               <Input
@@ -541,6 +647,17 @@ export const Sales = () => {
                 <option value="OVERDUE">Overdue</option>
               </Select>
             </FormField>
+            <FormField label="Remarks">
+              <Input
+                value={form.remarks}
+                onChange={(event) =>
+                  setForm((current) => ({
+                    ...current,
+                    remarks: event.target.value,
+                  }))
+                }
+              />
+            </FormField>
             <FormField label="Status">
               <Select
                 value={form.status ? "ACTIVE" : "INACTIVE"}
@@ -556,6 +673,141 @@ export const Sales = () => {
               </Select>
             </FormField>
           </div>
+
+          <div className="rounded-lg border border-border-gold p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <p className="font-semibold text-secondary">Sale Products</p>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() =>
+                  setForm((current) => ({
+                    ...current,
+                    lines: [...current.lines, createLine()],
+                  }))
+                }
+              >
+                + Add Product
+              </Button>
+            </div>
+            <div className="space-y-3">
+              {form.lines.map((line, index) => (
+                <div
+                  key={line.rowId}
+                  className="space-y-3 rounded-lg border border-border-gold/60 p-3"
+                >
+                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+                    <FormField label={`Product Code ${index + 1}`} required>
+                      <Select
+                        required
+                        value={line.productCode}
+                        onChange={(event) =>
+                          void selectProduct(line.rowId, event.target.value)
+                        }
+                      >
+                        <option value="">Select product code</option>
+                        {products.map((product) => (
+                          <option key={product.id} value={product.productCode}>
+                            {product.productCode}
+                          </option>
+                        ))}
+                      </Select>
+                    </FormField>
+                    <FormField label="Product Name">
+                      <Input readOnly value={line.productName} />
+                    </FormField>
+                    <FormField label="Brand">
+                      <Input readOnly value={names(line.brands)} />
+                    </FormField>
+                    <FormField label="Color">
+                      <Input readOnly value={names(line.colors)} />
+                    </FormField>
+                    <FormField label="Size">
+                      <Input readOnly value={names(line.sizes)} />
+                    </FormField>
+                    <FormField label="Supplier Name">
+                      <Input readOnly value={line.supplierName} />
+                    </FormField>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]">
+                    <FormField label="Quantity" required>
+                      <div className="flex gap-2">
+                        <Input
+                          required
+                          min="1"
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          className="w-24"
+                          value={line.quantity}
+                          onChange={(event) =>
+                            setLine(line.rowId, (currentLine) => ({
+                              ...currentLine,
+                              quantity: event.target.value.replace(/\D/g, ""),
+                            }))
+                          }
+                        />
+                        <Select
+                          value={line.unit}
+                          onChange={(event) =>
+                            setLine(line.rowId, (currentLine) => ({
+                              ...currentLine,
+                              unit: event.target.value as SaleLineForm["unit"],
+                            }))
+                          }
+                          className="w-32"
+                        >
+                          <option value="PIECES">Pieces</option>
+                          <option value="DOZEN">Dozen</option>
+                        </Select>
+                      </div>
+                    </FormField>
+                    <FormField label="Purchase Price">
+                      <Input readOnly value={line.purchasePrice} />
+                    </FormField>
+                    <FormField label="Sale Price" required>
+                      <Input
+                        required
+                        min="0"
+                        type="number"
+                        value={line.salePrice}
+                        onChange={(event) =>
+                          setLine(line.rowId, (currentLine) => ({
+                            ...currentLine,
+                            salePrice: event.target.value,
+                          }))
+                        }
+                      />
+                    </FormField>
+                    <FormField label="Total Sale Price">
+                      <Input readOnly value={line.productCode ? lineTotal(line) : ""} />
+                    </FormField>
+                    <div className="flex items-end">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={form.lines.length === 1}
+                        onClick={() =>
+                          setForm((current) => ({
+                            ...current,
+                            lines: current.lines.filter(
+                              (entry) => entry.rowId !== line.rowId,
+                            ),
+                          }))
+                        }
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-3 space-y-1 text-right font-semibold text-secondary">
+              <p>Net Total Sale Price: ₹{netTotalSalePrice}</p>
+            </div>
+          </div>
+
           <div className="flex justify-end gap-3">
             <Button type="button" variant="outline" onClick={reset}>
               Reset
@@ -566,6 +818,7 @@ export const Sales = () => {
           </div>
         </form>
       </Card>
+
       <Card className="mb-6 p-4">
         <div className="relative max-w-sm">
           <Search
@@ -583,6 +836,7 @@ export const Sales = () => {
           />
         </div>
       </Card>
+
       <DataTable
         columns={columns}
         rows={rows}
@@ -602,6 +856,7 @@ export const Sales = () => {
           },
         }}
       />
+
       <Modal
         open={!!viewing}
         onClose={() => setViewing(null)}
@@ -613,40 +868,149 @@ export const Sales = () => {
         }
       >
         {viewing && (
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <span>Product</span>
-            <span>{viewing.productName}</span>
-            <span>Supplier</span>
-            <span>{viewing.supplierName || "—"}</span>
-            <span>Brand</span>
-            <span>{names(viewing.brands)}</span>
-            <span>Color</span>
-            <span>{names(viewing.colors)}</span>
-            <span>Size</span>
-            <span>{names(viewing.sizes)}</span>
-            <span>Quantity</span>
-            <span>
-              {viewing.quantity} {viewing.unit}
-            </span>
-            <span>Purchase Price</span>
-            <span>₹{viewing.purchasePrice}</span>
-            <span>Sale Price</span>
-            <span>₹{viewing.salePrice}</span>
-            <span>Paid Amount</span>
-            <span>{viewing.paidAmount}</span>
-            <span>Remaining Amount</span>
-            <span>{viewing.remainingAmount}</span>
-            <span>Payment Status</span>
-            <span>{viewing.paymentStatus}</span>
-            {isAdmin && (
-              <>
-                <span>Per Sale Profit</span>
-                <span>{viewing.perSaleProfit}</span>
-              </>
-            )}
+          <div className="overflow-x-auto">
+            {(() => {
+              const viewItems =
+                viewing.items?.length > 0
+                  ? viewing.items
+                  : [
+                      {
+                        id: viewing.id,
+                        productCode: viewing.productCode,
+                        productName: viewing.productName,
+                        quantity: viewing.quantity,
+                        unit: viewing.unit,
+                        salePrice: viewing.salePrice,
+                        totalSalePrice:
+                          viewing.totalSalePrice ||
+                          viewing.quantity *
+                            unitMultiplier(viewing.unit) *
+                            viewing.salePrice,
+                      },
+                    ];
+              return (
+            <table className="w-full text-sm">
+              <tbody className="divide-y divide-border-gold">
+                <tr>
+                  <td className="px-4 py-2 font-semibold text-text-secondary">
+                    Party Name
+                  </td>
+                  <td className="px-4 py-2 text-secondary">
+                    {viewing.partyName || viewing.party?.partyName || "—"}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-2 font-semibold text-text-secondary">
+                    Product Code
+                  </td>
+                  <td className="px-4 py-2 text-secondary">
+                    <div className="space-y-1">
+                      {viewItems.map((item) => (
+                        <div key={item.id}>{item.productCode}</div>
+                      ))}
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-2 font-semibold text-text-secondary">
+                    Product Name
+                  </td>
+                  <td className="px-4 py-2 text-secondary">
+                    <div className="space-y-1">
+                      {viewItems.map((item) => (
+                        <div key={item.id}>{item.productName}</div>
+                      ))}
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-2 font-semibold text-text-secondary">
+                    Quantity
+                  </td>
+                  <td className="px-4 py-2 text-secondary">
+                    <div className="space-y-1">
+                      {viewItems.map((item) => (
+                        <div key={item.id}>
+                          {item.quantity} {item.unit}
+                        </div>
+                      ))}
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-2 font-semibold text-text-secondary">
+                    Sale Price
+                  </td>
+                  <td className="px-4 py-2 text-secondary">
+                    <div className="space-y-1">
+                      {viewItems.map((item) => (
+                        <div key={item.id}>₹{item.salePrice}</div>
+                      ))}
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-2 font-semibold text-text-secondary">
+                    Total Sale Price
+                  </td>
+                  <td className="px-4 py-2 text-secondary">
+                    <div className="space-y-1">
+                      {viewItems.map((item) => (
+                        <div key={item.id}>₹{item.totalSalePrice}</div>
+                      ))}
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-2 font-semibold text-text-secondary">
+                    Net Total Sale Price
+                  </td>
+                  <td className="px-4 py-2 text-secondary">
+                    ₹{viewing.netTotalSalePrice}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-2 font-semibold text-text-secondary">
+                    Paid Amount
+                  </td>
+                  <td className="px-4 py-2 text-secondary">
+                    ₹{viewing.paidAmount}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-2 font-semibold text-text-secondary">
+                    Remaining Amount
+                  </td>
+                  <td className="px-4 py-2 text-secondary">
+                    ₹{viewing.remainingAmount}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-2 font-semibold text-text-secondary">
+                    Payment Status
+                  </td>
+                  <td className="px-4 py-2 text-secondary">
+                    {viewing.paymentStatus}
+                  </td>
+                </tr>
+                {isAdmin && (
+                  <tr>
+                    <td className="px-4 py-2 font-semibold text-text-secondary">
+                      Per Sale Profit
+                    </td>
+                    <td className="px-4 py-2 text-secondary">
+                      ₹{viewing.perSaleProfit}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+              );
+            })()}
           </div>
         )}
       </Modal>
+
       <SaleInvoiceModal invoice={invoice} onClose={() => setInvoice(null)} />
     </>
   );

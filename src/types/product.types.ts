@@ -207,6 +207,7 @@ export interface PurchaseListResponse {
 export interface Sale {
   id: number;
   companyId: number;
+  saleNumber?: string;
   productId?: number;
   productName: string;
   productCode: string;
@@ -223,11 +224,15 @@ export interface Sale {
   quantity: number;
   unit: "PIECES" | "DOZEN";
   salePrice: number;
+  totalSalePrice?: number;
   purchasePrice: number;
+  netTotalPurchaseAmount?: number;
+  netTotalSalePrice?: number;
   paidAmount: number;
   remainingAmount: number;
   paymentStatus: "UNPAID" | "PARTIAL" | "PAID" | "OVERDUE";
   perSaleProfit: number;
+  remarks?: string;
   status: boolean;
   createdAt: string;
   updatedAt: string;
@@ -239,6 +244,25 @@ export interface Sale {
   sizes: { id: number; name: string }[];
   supplier?: { id: number; name: string };
   party?: { id: number; partyName: string };
+  items: {
+    id: number;
+    productId?: number;
+    productCode: string;
+    productName: string;
+    supplierId?: number;
+    supplierName?: string;
+    brandIds: number[];
+    colorIds: number[];
+    sizeIds: number[];
+    brands: { id: number; name: string }[];
+    colors: { id: number; name: string }[];
+    sizes: { id: number; name: string }[];
+    quantity: number;
+    unit: "PIECES" | "DOZEN";
+    salePrice: number;
+    purchasePrice: number;
+    totalSalePrice: number;
+  }[];
 }
 
 export interface SaleListResponse {
