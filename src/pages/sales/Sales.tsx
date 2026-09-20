@@ -86,6 +86,10 @@ const names = (items: { name: string }[]) =>
 
 const lineTotal = (line: SaleLineForm) =>
   numberOrZero(line.quantity) * unitMultiplier(line.unit) * numberOrZero(line.salePrice);
+const lineTotalPurchaseAmount = (line: SaleLineForm) =>
+  numberOrZero(line.quantity) *
+  unitMultiplier(line.unit) *
+  numberOrZero(line.purchasePrice);
 
 const getSaleLines = (sale: Sale): SaleLineForm[] =>
   sale.items?.length
@@ -154,6 +158,10 @@ export const Sales = () => {
 
   const netTotalSalePrice = useMemo(
     () => form.lines.reduce((sum, line) => sum + lineTotal(line), 0),
+    [form.lines],
+  );
+  const netTotalPurchaseAmount = useMemo(
+    () => form.lines.reduce((sum, line) => sum + lineTotalPurchaseAmount(line), 0),
     [form.lines],
   );
 
@@ -250,15 +258,9 @@ export const Sales = () => {
         brandIds: details.product.brandIds,
         colorIds: details.product.colorIds,
         sizeIds: details.product.sizeIds,
-        quantity:
-          details.product.quantity && details.product.quantity > 0
-            ? String(details.product.quantity)
-            : line.quantity || "1",
+        quantity: line.quantity || "1",
         unit: details.product.unit,
-        purchasePrice:
-          details.product.purchasePrice !== null
-            ? String(details.product.purchasePrice)
-            : "0",
+        purchasePrice: line.purchasePrice,
       }));
     } catch (error) {
       toast({
@@ -342,8 +344,10 @@ export const Sales = () => {
         unit: line.unit,
         salePrice: numberOrZero(line.salePrice),
         purchasePrice: numberOrZero(line.purchasePrice),
+        totalPurchaseAmount: lineTotalPurchaseAmount(line),
         totalSalePrice: lineTotal(line),
       })),
+      netTotalPurchaseAmount,
       netTotalSalePrice,
       paidAmount: numberOrZero(form.paidAmount),
       paymentStatus: form.paymentStatus,
@@ -729,7 +733,7 @@ export const Sales = () => {
                       <Input readOnly value={line.supplierName} />
                     </FormField>
                   </div>
-                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]">
+                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]">
                     <FormField label="Quantity" required>
                       <div className="flex gap-2">
                         <Input
@@ -761,9 +765,44 @@ export const Sales = () => {
                           <option value="DOZEN">Dozen</option>
                         </Select>
                       </div>
+                      {line.productCode && productDetails[line.productCode] && (
+                        <p className="mt-1 text-xs text-text-secondary">
+                          Balance Qty:{" "}
+                          {productDetails[line.productCode].product
+                            .balanceQuantityDisplay ||
+                            `${
+                              productDetails[line.productCode].product
+                                .balanceQuantity ?? 0
+                            } PIECES`}
+                        </p>
+                      )}
                     </FormField>
                     <FormField label="Purchase Price">
-                      <Input readOnly value={line.purchasePrice} />
+                      <Input
+                        min="0"
+                        type="number"
+                        value={line.purchasePrice}
+                        onChange={(event) =>
+                          setLine(line.rowId, (currentLine) => ({
+                            ...currentLine,
+                            purchasePrice: event.target.value,
+                          }))
+                        }
+                      />
+                      {line.productCode && productDetails[line.productCode] && (
+                        <p className="mt-1 text-xs text-text-secondary">
+                          Last Purchase Price: ₹
+                          {productDetails[line.productCode].product.lastPurchasePrice ??
+                            productDetails[line.productCode].product.purchasePrice ??
+                            0}
+                        </p>
+                      )}
+                    </FormField>
+                    <FormField label="Total Purchase Amount">
+                      <Input
+                        readOnly
+                        value={line.productCode ? lineTotalPurchaseAmount(line) : ""}
+                      />
                     </FormField>
                     <FormField label="Sale Price" required>
                       <Input
@@ -804,6 +843,7 @@ export const Sales = () => {
               ))}
             </div>
             <div className="mt-3 space-y-1 text-right font-semibold text-secondary">
+              <p>Net Total Purchase Amount: ₹{netTotalPurchaseAmount}</p>
               <p>Net Total Sale Price: ₹{netTotalSalePrice}</p>
             </div>
           </div>

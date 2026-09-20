@@ -6,7 +6,13 @@ type PurchasePayload = {
   supplierId: number
   supplierName?: string
   invoiceDate: string
-  items: { productCode: string; remarks?: string }[]
+  items: {
+    productCode: string;
+    quantity?: number;
+    purchasePrice?: number;
+    unit?: "PIECES" | "DOZEN";
+    remarks?: string;
+  }[]
   remarks?: string
   status: boolean
 }

@@ -175,6 +175,7 @@ export interface Purchase {
   invoiceDate: string;
   purchasePrice: number;
   quantity: number;
+  unit: "PIECES" | "DOZEN";
   totalPurchaseAmount: number;
   netTotalPurchaseAmount: number;
   paidAmount: number;
@@ -186,11 +187,13 @@ export interface Purchase {
   updatedAt: string;
   supplier?: { id: number; name: string; mobile: string };
   createdBy?: { id: number; name: string };
+  showSupplierFinance?: boolean;
   items: {
     id: number;
     productCode: string;
     productName?: string;
     quantity: number;
+    unit: "PIECES" | "DOZEN";
     purchasePrice: number;
     totalPurchaseAmount: number;
     remarks?: string;
@@ -227,11 +230,14 @@ export interface Sale {
   totalSalePrice?: number;
   purchasePrice: number;
   netTotalPurchaseAmount?: number;
+  netTotalpurchaseamount?: number;
   netTotalSalePrice?: number;
+  NetTotalsaleprice?: number;
   paidAmount: number;
   remainingAmount: number;
   paymentStatus: "UNPAID" | "PARTIAL" | "PAID" | "OVERDUE";
   perSaleProfit: number;
+  persaleprofit?: number;
   remarks?: string;
   status: boolean;
   createdAt: string;
@@ -262,6 +268,8 @@ export interface Sale {
     salePrice: number;
     purchasePrice: number;
     totalSalePrice: number;
+    Totalsaleprice?: number;
+    totalPurchaseAmount?: number;
   }[];
 }
 
@@ -279,10 +287,24 @@ export interface Stock {
   productName: string;
   sizeId: number;
   qtyIn: number;
+  qtyInDisplay?: string;
+  qtyInUnitDisplay?: string;
+  latestQtyIn?: number;
+  latestQtyInDisplay?: string;
+  latestQtyInUnitDisplay?: string;
+  previousQtyIn?: number;
+  previousQtyInDisplay?: string;
+  previousQtyInUnitDisplay?: string | null;
   qtyOut: number;
+  qtyOutDisplay?: string;
+  qtyOutUnitDisplay?: string;
   balanceStock: number;
+  balanceStockDisplay?: string;
   salePrice: number;
   purchasePrice: number;
+  latestPurchasePrice?: number;
+  previousPurchasePrice?: number | null;
+  latestPurchaseAt?: string | null;
   saleValue: number;
   remarks?: string;
   status: boolean;

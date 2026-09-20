@@ -19,17 +19,31 @@ type FormState = {
   supplierId: string;
   supplierName: string;
   invoiceDate: string;
-  productCodes: string[];
+  items: {
+    productCode: string;
+    purchasePrice: string;
+    quantity: string;
+    unit: "PIECES" | "DOZEN";
+  }[];
   remarks: string;
   status: boolean;
 };
+
+const createPurchaseItem = () => ({
+  productCode: "",
+  purchasePrice: "",
+  quantity: "",
+  unit: "PIECES" as const,
+});
+
+const unitMultiplier = (unit: "PIECES" | "DOZEN") => (unit === "DOZEN" ? 12 : 1);
 
 const emptyForm: FormState = {
   purchaseNumber: "",
   supplierId: "",
   supplierName: "",
   invoiceDate: "",
-  productCodes: [""],
+  items: [createPurchaseItem()],
   remarks: "",
   status: true,
 };
@@ -151,7 +165,21 @@ export const PurchaseMaster = () => {
       supplierId: String(row.supplierId),
       supplierName: row.supplierName,
       invoiceDate: row.invoiceDate.split("T")[0],
-      productCodes: row.items?.length ? row.items.map((item) => item.productCode) : [row.productCode],
+      items: row.items?.length
+        ? row.items.map((item) => ({
+            productCode: item.productCode,
+            purchasePrice: String(item.purchasePrice ?? ""),
+            quantity: String(item.quantity ?? ""),
+            unit: item.unit || "PIECES",
+          }))
+        : [
+            {
+              productCode: row.productCode,
+              purchasePrice: String(row.purchasePrice ?? ""),
+              quantity: String(row.quantity ?? ""),
+              unit: row.unit || "PIECES",
+            },
+          ],
       remarks: row.remarks || "",
       status: row.status,
     });
@@ -170,7 +198,14 @@ export const PurchaseMaster = () => {
         supplierId: Number(form.supplierId),
         supplierName: form.supplierName,
         invoiceDate: form.invoiceDate,
-        items: form.productCodes.filter(Boolean).map((productCode) => ({ productCode })),
+        items: form.items
+          .filter((item) => item.productCode)
+          .map((item) => ({
+            productCode: item.productCode,
+            quantity: Number(item.quantity) || 0,
+            purchasePrice: Number(item.purchasePrice) || 0,
+            unit: item.unit,
+          })),
         remarks: form.remarks || undefined,
         status: form.status,
       };
@@ -246,10 +281,12 @@ export const PurchaseMaster = () => {
     suppliers.find((s) => s.id === purchase.supplierId)?.name ||
     "—";
 
-  const displayItems = paginatedItems.map((purchase) => ({
-    ...purchase,
-    supplierName: getSupplierName(purchase),
-  }));
+  const displayItems = paginatedItems.map((purchase) => {
+    return {
+      ...purchase,
+      supplierName: getSupplierName(purchase),
+    };
+  });
 
   const columns: DataTableColumn<Purchase>[] = [
     { key: "purchaseNumber", header: "Purchase No", width: "120px" },
@@ -282,7 +319,20 @@ export const PurchaseMaster = () => {
       width: "120px",
       cell: (row) => <div className="space-y-1">{row.items.map((item) => <div key={item.id}>₹{item.purchasePrice}</div>)}</div>,
     },
-    { key: "quantity", header: "Quantity", width: "100px", cell: (row) => <div className="space-y-1">{row.items.map((item) => <div key={item.id}>{item.quantity}</div>)}</div> },
+    {
+      key: "quantity",
+      header: "Quantity",
+      width: "130px",
+      cell: (row) => (
+        <div className="space-y-1">
+          {row.items.map((item) => (
+            <div key={item.id}>
+              {item.quantity} {item.unit}
+            </div>
+          ))}
+        </div>
+      ),
+    },
     {
       key: "totalPurchaseAmount",
       header: "Total Purchase",
@@ -294,18 +344,6 @@ export const PurchaseMaster = () => {
       header: "Net Total Purchase",
       width: "150px",
       cell: (row) => <span className="font-semibold">₹{row.netTotalPurchaseAmount}</span>,
-    },
-    {
-      key: "paidAmount",
-      header: "Paid Amount",
-      width: "120px",
-      cell: (row) => `₹${row.paidAmount}`,
-    },
-    {
-      key: "remainingAmount",
-      header: "Remaining",
-      width: "120px",
-      cell: (row) => `₹${row.remainingAmount}`,
     },
     {
       key: "paymentStatus",
@@ -452,42 +490,139 @@ export const PurchaseMaster = () => {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setForm({ ...form, productCodes: [...form.productCodes, ""] })}
+                onClick={() =>
+                  setForm({ ...form, items: [...form.items, createPurchaseItem()] })
+                }
               >
                 + Add Product
               </Button>
             </div>
             <div className="space-y-3">
-              {form.productCodes.map((productCode, index) => {
-                const product = products.find((item) => item.productCode === productCode);
-                const total = (Number(product?.quantity) || 0)
-                  * (product?.unit === "DOZEN" ? 12 : 1)
-                  * (Number(product?.purchasePrice) || 0);
+              {form.items.map((entry, index) => {
+                const total =
+                  (Number(entry.quantity) || 0) *
+                  unitMultiplier(entry.unit) *
+                  (Number(entry.purchasePrice) || 0);
                 return (
-                  <div key={`${index}-${productCode}`} className="grid items-end gap-3 sm:grid-cols-[minmax(0,2fr)_minmax(0,2fr)_1fr_1fr_1fr_auto]">
+                  <div key={`${index}-${entry.productCode}`} className="grid items-end gap-3 sm:grid-cols-[minmax(0,2fr)_minmax(0,2fr)_1fr_1fr_1fr_1fr_auto]">
                     <FormField label={`Product Code ${index + 1}`} required>
                       <Select
                         required
-                        value={productCode}
+                        value={entry.productCode}
                         onChange={(e) => {
-                          const productCodes = [...form.productCodes];
-                          productCodes[index] = e.target.value;
-                          setForm({ ...form, productCodes });
+                          const selectedCode = e.target.value;
+                          const product = products.find(
+                            (item) => item.productCode === selectedCode,
+                          );
+                          setForm((current) => ({
+                            ...current,
+                            items: current.items.map((item, itemIndex) =>
+                              itemIndex === index
+                                ? {
+                                    ...item,
+                                    productCode: selectedCode,
+                                    purchasePrice: product
+                                      ? String(product.purchasePrice ?? 0)
+                                      : item.purchasePrice,
+                                    quantity: product
+                                      ? String(product.quantity ?? 0)
+                                      : item.quantity,
+                                    unit: product?.unit || item.unit,
+                                  }
+                                : item,
+                            ),
+                          }));
                         }}
                       >
                         <option value="">Select product code</option>
                         {products.map((item) => <option key={item.id} value={item.productCode}>{item.productCode}</option>)}
                       </Select>
                     </FormField>
-                    <FormField label="Product Name"><Input readOnly value={product?.productName ?? ""} /></FormField>
-                    <FormField label="Purchase Price"><Input readOnly value={product?.purchasePrice ?? ""} /></FormField>
-                    <FormField label="Quantity"><Input readOnly value={product?.quantity ?? ""} /></FormField>
-                    <FormField label="Total"><Input readOnly value={product ? total : ""} /></FormField>
+                    <FormField label="Product Name">
+                      <Input
+                        readOnly
+                        value={
+                          products.find(
+                            (item) => item.productCode === entry.productCode,
+                          )?.productName ?? ""
+                        }
+                      />
+                    </FormField>
+                    <FormField label="Purchase Price">
+                      <Input
+                        min="0"
+                        type="number"
+                        value={entry.purchasePrice}
+                        onChange={(e) =>
+                          setForm((current) => ({
+                            ...current,
+                            items: current.items.map((item, itemIndex) =>
+                              itemIndex === index
+                                ? { ...item, purchasePrice: e.target.value }
+                                : item,
+                            ),
+                          }))
+                        }
+                      />
+                    </FormField>
+                    <FormField label="Quantity">
+                      <Input
+                        min="0"
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={entry.quantity}
+                        onChange={(e) =>
+                          setForm((current) => ({
+                            ...current,
+                            items: current.items.map((item, itemIndex) =>
+                              itemIndex === index
+                                ? {
+                                    ...item,
+                                    quantity: e.target.value.replace(/\D/g, ""),
+                                  }
+                                : item,
+                            ),
+                          }))
+                        }
+                      />
+                    </FormField>
+                    <FormField label="Unit">
+                      <Select
+                        value={entry.unit}
+                        onChange={(e) =>
+                          setForm((current) => ({
+                            ...current,
+                            items: current.items.map((item, itemIndex) =>
+                              itemIndex === index
+                                ? {
+                                    ...item,
+                                    unit: e.target.value as "PIECES" | "DOZEN",
+                                  }
+                                : item,
+                            ),
+                          }))
+                        }
+                      >
+                        <option value="PIECES">Pieces</option>
+                        <option value="DOZEN">Dozens</option>
+                      </Select>
+                    </FormField>
+                    <FormField label="Total">
+                      <Input readOnly value={entry.productCode ? total : ""} />
+                    </FormField>
                     <Button
                       type="button"
                       variant="outline"
-                      disabled={form.productCodes.length === 1}
-                      onClick={() => setForm({ ...form, productCodes: form.productCodes.filter((_, itemIndex) => itemIndex !== index) })}
+                      disabled={form.items.length === 1}
+                      onClick={() =>
+                        setForm((current) => ({
+                          ...current,
+                          items: current.items.filter(
+                            (_, itemIndex) => itemIndex !== index,
+                          ),
+                        }))
+                      }
                     >
                       Remove
                     </Button>
@@ -496,12 +631,15 @@ export const PurchaseMaster = () => {
               })}
             </div>
             <p className="mt-3 text-right font-semibold text-secondary">
-              Net Total Purchase Amount: ₹{form.productCodes.reduce((sum, productCode) => {
-                const product = products.find((item) => item.productCode === productCode);
-                return sum + (Number(product?.quantity) || 0)
-                  * (product?.unit === "DOZEN" ? 12 : 1)
-                  * (Number(product?.purchasePrice) || 0);
-              }, 0)}
+              Net Total Purchase Amount: ₹
+              {form.items.reduce(
+                (sum, item) =>
+                  sum +
+                  (Number(item.quantity) || 0) *
+                    unitMultiplier(item.unit) *
+                    (Number(item.purchasePrice) || 0),
+                0,
+              )}
             </p>
           </div>
 
@@ -655,7 +793,15 @@ export const PurchaseMaster = () => {
                 </tr>
                 <tr>
                   <td className="px-4 py-2 font-semibold text-text-secondary">Quantity</td>
-                  <td className="px-4 py-2 text-secondary"><div className="space-y-1">{viewing.items.map((item) => <div key={item.id}>{item.quantity}</div>)}</div></td>
+                  <td className="px-4 py-2 text-secondary">
+                    <div className="space-y-1">
+                      {viewing.items.map((item) => (
+                        <div key={item.id}>
+                          {item.quantity} {item.unit}
+                        </div>
+                      ))}
+                    </div>
+                  </td>
                 </tr>
                 <tr>
                   <td className="px-4 py-2 font-semibold text-text-secondary">

@@ -19,7 +19,9 @@ export type SalePayload = {
     salePrice: number;
     purchasePrice: number;
     totalSalePrice: number;
+    totalPurchaseAmount?: number;
   }[];
+  netTotalPurchaseAmount?: number;
   netTotalSalePrice: number;
   paidAmount?: number;
   paymentStatus?: "UNPAID" | "PARTIAL" | "PAID" | "OVERDUE";
@@ -34,6 +36,11 @@ export type ProductDetails = {
     quantity: number | null;
     unit: "PIECES" | "DOZEN";
     purchasePrice: number | null;
+    lastPurchasePrice: number | null;
+    previousPurchasePrice: number | null;
+    balanceQuantity: number | null;
+    balanceQuantityDisplay: string | null;
+    totalPurchaseAmount: number | null;
     brandIds: number[];
     colorIds: number[];
     sizeIds: number[];
@@ -105,10 +112,15 @@ const normalizeSale = (entry: Sale): Sale => {
           salePrice: numberOrZero(item.salePrice || entry.salePrice),
           purchasePrice: numberOrZero(item.purchasePrice || entry.purchasePrice),
           totalSalePrice:
-            numberOrZero(item.totalSalePrice) ||
+            numberOrZero(item.totalSalePrice || item.Totalsaleprice) ||
             numberOrZero(item.quantity || entry.quantity) *
               unitMultiplier(item.unit || entry.unit) *
               numberOrZero(item.salePrice || entry.salePrice),
+          totalPurchaseAmount:
+            numberOrZero(item.totalPurchaseAmount) ||
+            numberOrZero(item.quantity || entry.quantity) *
+              unitMultiplier(item.unit || entry.unit) *
+              numberOrZero(item.purchasePrice || entry.purchasePrice),
         }))
       : [
           {
@@ -133,20 +145,21 @@ const normalizeSale = (entry: Sale): Sale => {
               numberOrZero(entry.quantity) *
                 unitMultiplier(entry.unit) *
                 numberOrZero(entry.salePrice),
+            totalPurchaseAmount:
+              numberOrZero(entry.quantity) *
+              unitMultiplier(entry.unit) *
+              numberOrZero(entry.purchasePrice),
           },
         ];
 
   const netTotalSalePrice =
-    numberOrZero(entry.netTotalSalePrice) ||
+    numberOrZero(entry.netTotalSalePrice || entry.NetTotalsaleprice) ||
     normalizedItems.reduce((sum, item) => sum + numberOrZero(item.totalSalePrice), 0);
   const netTotalPurchaseAmount =
-    numberOrZero(entry.netTotalPurchaseAmount) ||
+    numberOrZero(entry.netTotalPurchaseAmount || entry.netTotalpurchaseamount) ||
     normalizedItems.reduce(
       (sum, item) =>
-        sum +
-        numberOrZero(item.quantity) *
-          unitMultiplier(item.unit) *
-          numberOrZero(item.purchasePrice),
+        sum + numberOrZero(item.totalPurchaseAmount),
       0,
     );
 
@@ -165,7 +178,8 @@ const normalizeSale = (entry: Sale): Sale => {
     netTotalSalePrice,
     netTotalPurchaseAmount,
     perSaleProfit:
-      numberOrZero(entry.perSaleProfit) || netTotalPurchaseAmount - netTotalSalePrice,
+      numberOrZero(entry.perSaleProfit || entry.persaleprofit) ||
+      netTotalSalePrice - netTotalPurchaseAmount,
     brandIds: Array.isArray(entry.brandIds) ? entry.brandIds : [],
     colorIds: Array.isArray(entry.colorIds) ? entry.colorIds : [],
     sizeIds: Array.isArray(entry.sizeIds) ? entry.sizeIds : [],

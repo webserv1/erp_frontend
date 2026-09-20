@@ -10,6 +10,38 @@ import type { Stock } from "../../types/product.types";
 const names = (items: { name: string }[]) =>
   items.map((item) => item.name).join(", ") || "-";
 const currency = (amount: number) => `₹${amount}`;
+const formatQtyCompact = (value: number) => {
+  const sign = value < 0 ? "-" : "";
+  const absolute = Math.abs(value);
+  const dozens = Math.floor(absolute / 12);
+  const pieces = absolute % 12;
+  return {
+    total: `${sign}${absolute} pc`,
+    split: `${sign}${dozens} dz${pieces ? ` ${pieces} pc` : ""}`,
+  };
+};
+const priceChangeBadge = (
+  latestPrice: number,
+  previousPrice: number,
+): { label: string; className: string } => {
+  const diff = latestPrice - previousPrice;
+  if (diff > 0) {
+    return {
+      label: `↑ +${currency(diff)}`,
+      className: "bg-red-100 text-red-700",
+    };
+  }
+  if (diff < 0) {
+    return {
+      label: `↓ ${currency(diff)}`,
+      className: "bg-green-100 text-green-700",
+    };
+  }
+  return {
+    label: "→ No change",
+    className: "bg-gray-100 text-gray-700",
+  };
+};
 
 export const StockMaster = () => {
   const navigate = useNavigate();
@@ -60,13 +92,91 @@ export const StockMaster = () => {
     { key: "brand", header: "Brand", cell: (stock) => names(stock.brands) },
     { key: "color", header: "Color", cell: (stock) => names(stock.colors) },
     { key: "size", header: "Size", cell: (stock) => names(stock.sizes) },
-    { key: "qtyIn", header: "Qty In" },
-    { key: "qtyOut", header: "Qty Out" },
-    { key: "balanceStock", header: "Balance Stock" },
+    {
+      key: "qtyIn",
+      header: "Total Qty In",
+      cell: (stock) => {
+        const formatted = formatQtyCompact(stock.qtyIn);
+        return (
+          <div className="leading-tight">
+            <div>{stock.qtyInUnitDisplay || formatted.total}</div>
+          </div>
+        );
+      },
+    },
+    {
+      key: "latestQtyIn",
+      header: "New Qty In",
+      cell: (stock) => {
+        const latest = stock.latestQtyIn || 0;
+        const formatted = formatQtyCompact(latest);
+        return (
+          <div className="leading-tight">
+            <div>{stock.latestQtyInUnitDisplay || formatted.total}</div>
+            {stock.previousQtyInUnitDisplay && (
+              <div className="text-xs text-text-secondary">
+                Prev: {stock.previousQtyInUnitDisplay}
+              </div>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      key: "qtyOut",
+      header: "Qty Out",
+      cell: (stock) => {
+        const formatted = formatQtyCompact(stock.qtyOut);
+        return (
+          <div className="leading-tight">
+            <div>{stock.qtyOutUnitDisplay || formatted.total}</div>
+          </div>
+        );
+      },
+    },
+    {
+      key: "balanceStock",
+      header: "Balance Stock",
+      cell: (stock) => {
+        const formatted = formatQtyCompact(stock.balanceStock);
+        return (
+          <div className="leading-tight">
+            <div>{formatted.total}</div>
+            <div className="text-xs text-text-secondary">{formatted.split}</div>
+          </div>
+        );
+      },
+    },
     {
       key: "purchasePrice",
-      header: "Purchase Price",
-      cell: (stock) => currency(stock.purchasePrice),
+      header: "Last Purchase Price",
+      cell: (stock) => {
+        const latest = stock.latestPurchasePrice ?? stock.purchasePrice;
+        const previous = stock.previousPurchasePrice;
+        const badge =
+          previous !== null && previous !== undefined
+            ? priceChangeBadge(latest, previous)
+            : null;
+        return (
+          <div className="leading-tight">
+            <div>{currency(latest)}</div>
+            {previous !== null && previous !== undefined && (
+              <div className="mt-1 flex items-center gap-2">
+                <span className="text-xs text-text-secondary">
+                  Prev: {currency(previous)}
+                </span>
+                {badge && (
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${badge.className}`}
+                  >
+                    {badge.label}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      },
     },
     {
       key: "salePrice",
