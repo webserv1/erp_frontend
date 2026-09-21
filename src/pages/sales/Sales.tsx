@@ -385,9 +385,23 @@ export const Sales = () => {
         : await saleApi.create(payload);
       setItems((current) =>
         editing
-          ? current.map((sale) =>
-              sale.id === response.sale.id ? response.sale : sale,
-            )
+          ? (() => {
+              const existingSaleNumber = editing.saleNumber || "";
+              let replaced = false;
+              const next = current.map((sale) => {
+                const isSameInvoice =
+                  existingSaleNumber &&
+                  (sale.saleNumber === existingSaleNumber ||
+                    sale.invoiceNumber === existingSaleNumber);
+                const isSameId = sale.id === editing.id;
+                if (isSameInvoice || isSameId) {
+                  replaced = true;
+                  return response.sale;
+                }
+                return sale;
+              });
+              return replaced ? next : [response.sale, ...next];
+            })()
           : [response.sale, ...current],
       );
       reset();
