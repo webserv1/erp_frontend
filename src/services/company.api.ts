@@ -22,10 +22,37 @@ const request = async <T>(path: string, options: RequestInit = {}): Promise<T> =
   return data as T
 }
 
+export interface ProfileUser {
+  id: number
+  name: string
+  email: string
+  mobile: string | null
+  dateOfBirth: string | null
+  gender: string | null
+  address: string | null
+  photoUrl: string | null
+  signatureUrl: string | null
+  panUrl: string | null
+  aadhaarUrl: string | null
+  status: boolean
+  createdAt: string
+  updatedAt: string
+  role: { id: number; name: string }
+}
+
+export interface CompanyProfileResponse {
+  company: { id: number; name: string; createdAt: string; updatedAt: string }
+  roles: { id: number; name: string }[]
+  currentUser: ProfileUser
+  users: ProfileUser[]
+}
+
 export const companyApi = {
   get: () => request<{ company: Company }>('/company').then((res) => res.company),
   update: (payload: Partial<Company>) => request<{ company: Company }>('/company', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }),
-  getProfile: () => request<{ company: { id: number; name: string; createdAt: string; updatedAt: string }; roles: { id: number; name: string }[] }>('/company/profile'),
+  getProfile: () => request<CompanyProfileResponse>('/company/profile'),
+  updateUserProfile: (userId: number, payload: FormData) => request<{ message: string; user: ProfileUser }>(`/company/profile/users/${userId}`, { method: 'PUT', body: payload }),
+  deleteUserProfile: (userId: number) => request<{ message: string }>(`/company/profile/users/${userId}`, { method: 'DELETE' }),
 }
 
 export const brandingApi = {

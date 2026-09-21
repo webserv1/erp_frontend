@@ -47,6 +47,15 @@ const emptyForm: FormState = {
   remarks: "",
   status: true,
 };
+const renderStackedValues = (values: Array<string | number>) => (
+  <div className="overflow-hidden rounded-md border border-border-gold/40 divide-y divide-border-gold/30 bg-white/40">
+    {values.map((value, index) => (
+      <div key={index} className="px-2 py-1">
+        {value}
+      </div>
+    ))}
+  </div>
+);
 
 export const PurchaseMaster = () => {
   const navigate = useNavigate();
@@ -299,13 +308,13 @@ export const PurchaseMaster = () => {
       key: "productCode",
       header: "Product Code",
       width: "150px",
-      cell: (row) => <div className="space-y-1">{row.items.map((item) => <div key={item.id}>{item.productCode}</div>)}</div>,
+      cell: (row) => renderStackedValues(row.items.map((item) => item.productCode)),
     },
     {
       key: "productName",
       header: "Product Name",
       width: "160px",
-      cell: (row) => <div className="space-y-1">{row.items.map((item) => <div key={item.id}>{item.productName || "—"}</div>)}</div>,
+      cell: (row) => renderStackedValues(row.items.map((item) => item.productName || "—")),
     },
     {
       key: "invoiceDate",
@@ -317,27 +326,25 @@ export const PurchaseMaster = () => {
       key: "purchasePrice",
       header: "Purchase Price",
       width: "120px",
-      cell: (row) => <div className="space-y-1">{row.items.map((item) => <div key={item.id}>₹{item.purchasePrice}</div>)}</div>,
+      cell: (row) =>
+        renderStackedValues(row.items.map((item) => `₹${item.purchasePrice}`)),
     },
     {
       key: "quantity",
       header: "Quantity",
       width: "130px",
       cell: (row) => (
-        <div className="space-y-1">
-          {row.items.map((item) => (
-            <div key={item.id}>
-              {item.quantity} {item.unit}
-            </div>
-          ))}
-        </div>
+        renderStackedValues(
+          row.items.map((item) => `${item.quantity} ${item.unit}`),
+        )
       ),
     },
     {
       key: "totalPurchaseAmount",
       header: "Total Purchase",
       width: "140px",
-      cell: (row) => <div className="space-y-1">{row.items.map((item) => <div key={item.id}>₹{item.totalPurchaseAmount}</div>)}</div>,
+      cell: (row) =>
+        renderStackedValues(row.items.map((item) => `₹${item.totalPurchaseAmount}`)),
     },
     {
       key: "netTotalPurchaseAmount",

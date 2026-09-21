@@ -211,6 +211,7 @@ export interface Sale {
   id: number;
   companyId: number;
   saleNumber?: string;
+  invoiceNumber?: string;
   productId?: number;
   productName: string;
   productCode: string;

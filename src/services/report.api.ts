@@ -31,4 +31,5 @@ export const reportApi = {
   },
   get: (id: number) => request<{ report: Report }>(`/reports/${id}`).then((res) => res.report),
   generate: (payload: GenerateReportPayload) => request<{ message: string; report: Report }>('/reports/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }),
+  remove: (id: number) => request<{ message: string }>(`/reports/${id}`, { method: 'DELETE' }),
 }

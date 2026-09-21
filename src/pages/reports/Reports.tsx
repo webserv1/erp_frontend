@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, Download, Eye, Filter, Plus } from "lucide-react";
+import { ArrowLeft, Download, Eye, Filter, Plus, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast, Button, Card, Modal } from "../../components/ui";
 import { FormField, Select } from "../../components/forms";
@@ -186,6 +186,9 @@ export const Reports = () => {
   const [loading, setLoading] = useState(true);
   const [typeFilter, setTypeFilter] = useState<string>("");
   const [generateModalOpen, setGenerateModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [reportToDelete, setReportToDelete] = useState<Report | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [generateType, setGenerateType] = useState<"WEEKLY" | "MONTHLY">(
     "WEEKLY",
   );
@@ -256,6 +259,40 @@ export const Reports = () => {
         description: (err as Error).message,
         variant: "error",
       });
+    }
+  };
+
+  const openDeleteModal = (report: Report) => {
+    setReportToDelete(report);
+    setDeleteModalOpen(true);
+  };
+
+  const closeDeleteModal = () => {
+    if (deleting) return;
+    setDeleteModalOpen(false);
+    setReportToDelete(null);
+  };
+
+  const confirmDelete = async () => {
+    if (!reportToDelete) return;
+    setDeleting(true);
+    try {
+      const result = await reportApi.remove(reportToDelete.id);
+      toast({ title: result.message || "Report deleted", variant: "success" });
+      if (selectedReport?.id === reportToDelete.id) {
+        setSelectedReport(null);
+      }
+      setDeleteModalOpen(false);
+      setReportToDelete(null);
+      await loadReports();
+    } catch (err) {
+      toast({
+        title: "Delete failed",
+        description: (err as Error).message,
+        variant: "error",
+      });
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -346,6 +383,16 @@ export const Reports = () => {
 
   const actions: DataTableAction<Report>[] = [
     { label: <Eye size={16} />, onClick: openView, title: "View" },
+    ...(canManage
+      ? [
+          {
+            label: <Trash2 size={13} />,
+            onClick: openDeleteModal,
+            title: "Delete",
+            className: "text-red-600 hover:bg-red-50",
+          } as DataTableAction<Report>,
+        ]
+      : []),
   ];
 
   const renderReportDetails = (report: Report) => {
@@ -697,6 +744,37 @@ export const Reports = () => {
               Generate
             </Button>
           </div>
+        </div>
+      </Modal>
+
+      <Modal
+        open={deleteModalOpen}
+        onClose={closeDeleteModal}
+        title="Delete Report"
+        footer={
+          <>
+            <Button variant="outline" onClick={closeDeleteModal} disabled={deleting}>
+              Cancel
+            </Button>
+            <Button variant="danger" onClick={confirmDelete} loading={deleting}>
+              Delete Report
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-3">
+          <p className="text-sm text-text-secondary">
+            Are you sure you want to delete this report?
+          </p>
+          {reportToDelete && (
+            <div className="rounded-lg border border-border-gold bg-primary/5 px-3 py-2">
+              <p className="text-sm font-semibold text-secondary">
+                {reportToDelete.type} • {formatDate(reportToDelete.periodStart)} -{" "}
+                {formatDate(reportToDelete.periodEnd)}
+              </p>
+            </div>
+          )}
+          <p className="text-xs text-text-secondary">This action cannot be undone.</p>
         </div>
       </Modal>
     </>

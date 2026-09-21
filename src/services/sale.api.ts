@@ -54,8 +54,27 @@ export type ProductDetails = {
 export type SaleInvoice = {
   invoiceNumber: string;
   issueDate: string;
-  company: { id: number; name: string; logoUrl: string | null };
-  customer: { id: number; name: string } | null;
+  company: {
+    id: number;
+    name: string;
+    logoUrl: string | null;
+    contactName: string | null;
+    mobile: string | null;
+    email: string | null;
+    address: string | null;
+  };
+  customer: {
+    id: number;
+    name: string;
+    shopName: string;
+    mobile: string;
+    email: string | null;
+    address: string;
+    city: string;
+    state: string;
+    country: string;
+    pincode: string;
+  } | null;
   sale: Sale;
 };
 const base = import.meta.env.VITE_API_BASE_URL;
@@ -165,6 +184,7 @@ const normalizeSale = (entry: Sale): Sale => {
 
   return {
     ...entry,
+    invoiceNumber: entry.invoiceNumber || entry.saleNumber,
     productCode: normalizedItems[0]?.productCode || entry.productCode,
     productName: normalizedItems[0]?.productName || entry.productName,
     quantity: numberOrZero(entry.quantity || normalizedItems[0]?.quantity),
@@ -208,9 +228,10 @@ const request = async <T>(
   return data as T;
 };
 export const saleApi = {
-  list: (params?: { search?: string; page?: number; limit?: number }) => {
+  list: (params?: { search?: string; invoiceNumber?: string; page?: number; limit?: number }) => {
     const query = new URLSearchParams();
     if (params?.search) query.append("search", params.search);
+    if (params?.invoiceNumber) query.append("invoiceNumber", params.invoiceNumber);
     if (params?.page) query.append("page", String(params.page));
     if (params?.limit) query.append("limit", String(params.limit));
     const qs = query.toString();

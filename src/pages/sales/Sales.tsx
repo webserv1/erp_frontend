@@ -83,6 +83,15 @@ const unitMultiplier = (unit: "PIECES" | "DOZEN") => (unit === "DOZEN" ? 12 : 1)
 const numberOrZero = (value: string | number) => Number(value) || 0;
 const names = (items: { name: string }[]) =>
   items.map((item) => item.name).join(", ") || "—";
+const renderStackedValues = (values: Array<string | number>) => (
+  <div className="overflow-hidden rounded-md border border-border-gold/40 divide-y divide-border-gold/30 bg-white/40">
+    {values.map((value, index) => (
+      <div key={index} className="px-2 py-1">
+        {value}
+      </div>
+    ))}
+  </div>
+);
 
 const lineTotal = (line: SaleLineForm) =>
   numberOrZero(line.quantity) * unitMultiplier(line.unit) * numberOrZero(line.salePrice);
@@ -153,6 +162,8 @@ export const Sales = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
+  const [invoiceFilter, setInvoiceFilter] = useState("");
+  const [invoiceOptions, setInvoiceOptions] = useState<string[]>([]);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(5);
 
@@ -165,8 +176,11 @@ export const Sales = () => {
     [form.lines],
   );
 
-  const loadSales = async (term = search) => {
-    const data = await saleApi.list({ search: term || undefined });
+  const loadSales = async (term = search, invoiceNumber = invoiceFilter) => {
+    const data = await saleApi.list({
+      search: term || undefined,
+      invoiceNumber: invoiceNumber || undefined,
+    });
     setItems(data.sale);
   };
 
@@ -178,6 +192,15 @@ export const Sales = () => {
     ])
       .then(([sales, productData, partyData]) => {
         setItems(sales.sale);
+        setInvoiceOptions(
+          Array.from(
+            new Set(
+              sales.sale
+                .map((sale) => sale.invoiceNumber || sale.saleNumber || "")
+                .filter(Boolean),
+            ),
+          ).sort(),
+        );
         setProducts(productData.products);
         setParties(partyData.party);
       })
@@ -202,7 +225,7 @@ export const Sales = () => {
       );
     }, 250);
     return () => window.clearTimeout(id);
-  }, [search, toast]);
+  }, [search, invoiceFilter, toast]);
 
   const reset = () => {
     setForm({ ...empty, lines: [createLine()] });
@@ -328,7 +351,7 @@ export const Sales = () => {
     }
 
     const payload: SalePayload = {
-      saleNumber: form.saleNumber || undefined,
+      saleNumber: editing ? form.saleNumber || undefined : undefined,
       partyId: Number(form.partyId),
       partyName: form.partyName || undefined,
       items: form.lines.map((line) => ({
@@ -368,6 +391,16 @@ export const Sales = () => {
           : [response.sale, ...current],
       );
       reset();
+      setInvoiceOptions((current) =>
+        Array.from(
+          new Set([
+            ...current,
+            response.sale.invoiceNumber || response.sale.saleNumber || "",
+          ]),
+        )
+          .filter(Boolean)
+          .sort(),
+      );
       setPage(1);
       toast({
         title: editing ? "Sale updated" : "Sale created",
@@ -398,28 +431,29 @@ export const Sales = () => {
 
   const columns: DataTableColumn<Sale>[] = [
     {
+      key: "invoiceNumber",
+      header: "Invoice Number",
+      cell: (sale) => sale.invoiceNumber || sale.saleNumber || "—",
+    },
+    {
       key: "productCode",
       header: "Product Code",
-      cell: (sale) => (
-        <div className="space-y-1">
-          {(sale.items?.length ? sale.items : []).map((item) => (
-            <div key={item.id}>{item.productCode}</div>
-          ))}
-          {!sale.items?.length && <div>{sale.productCode}</div>}
-        </div>
-      ),
+      cell: (sale) =>
+        renderStackedValues(
+          sale.items?.length
+            ? sale.items.map((item) => item.productCode)
+            : [sale.productCode],
+        ),
     },
     {
       key: "productName",
       header: "Product Name",
-      cell: (sale) => (
-        <div className="space-y-1">
-          {(sale.items?.length ? sale.items : []).map((item) => (
-            <div key={item.id}>{item.productName}</div>
-          ))}
-          {!sale.items?.length && <div>{sale.productName}</div>}
-        </div>
-      ),
+      cell: (sale) =>
+        renderStackedValues(
+          sale.items?.length
+            ? sale.items.map((item) => item.productName)
+            : [sale.productName],
+        ),
     },
     {
       key: "partyName",
@@ -429,80 +463,62 @@ export const Sales = () => {
     {
       key: "brand",
       header: "Brand",
-      cell: (sale) => (
-        <div className="space-y-1">
-          {(sale.items?.length ? sale.items : []).map((item) => (
-            <div key={item.id}>{names(item.brands)}</div>
-          ))}
-          {!sale.items?.length && <div>{names(sale.brands)}</div>}
-        </div>
-      ),
+      cell: (sale) =>
+        renderStackedValues(
+          sale.items?.length
+            ? sale.items.map((item) => names(item.brands))
+            : [names(sale.brands)],
+        ),
     },
     {
       key: "color",
       header: "Color",
-      cell: (sale) => (
-        <div className="space-y-1">
-          {(sale.items?.length ? sale.items : []).map((item) => (
-            <div key={item.id}>{names(item.colors)}</div>
-          ))}
-          {!sale.items?.length && <div>{names(sale.colors)}</div>}
-        </div>
-      ),
+      cell: (sale) =>
+        renderStackedValues(
+          sale.items?.length
+            ? sale.items.map((item) => names(item.colors))
+            : [names(sale.colors)],
+        ),
     },
     {
       key: "size",
       header: "Size",
-      cell: (sale) => (
-        <div className="space-y-1">
-          {(sale.items?.length ? sale.items : []).map((item) => (
-            <div key={item.id}>{names(item.sizes)}</div>
-          ))}
-          {!sale.items?.length && <div>{names(sale.sizes)}</div>}
-        </div>
-      ),
+      cell: (sale) =>
+        renderStackedValues(
+          sale.items?.length
+            ? sale.items.map((item) => names(item.sizes))
+            : [names(sale.sizes)],
+        ),
     },
     {
       key: "quantity",
       header: "Quantity",
-      cell: (sale) => (
-        <div className="space-y-1">
-          {(sale.items?.length ? sale.items : []).map((item) => (
-            <div key={item.id}>
-              {item.quantity} {item.unit}
-            </div>
-          ))}
-          {!sale.items?.length && (
-            <div>
-              {sale.quantity} {sale.unit}
-            </div>
-          )}
-        </div>
-      ),
+      cell: (sale) =>
+        renderStackedValues(
+          sale.items?.length
+            ? sale.items.map((item) => `${item.quantity} ${item.unit}`)
+            : [`${sale.quantity} ${sale.unit}`],
+        ),
     },
     {
       key: "salePrice",
       header: "Sale Price",
-      cell: (sale) => (
-        <div className="space-y-1">
-          {(sale.items?.length ? sale.items : []).map((item) => (
-            <div key={item.id}>₹{item.salePrice}</div>
-          ))}
-          {!sale.items?.length && <div>₹{sale.salePrice}</div>}
-        </div>
-      ),
+      cell: (sale) =>
+        renderStackedValues(
+          sale.items?.length
+            ? sale.items.map((item) => `₹${item.salePrice}`)
+            : [`₹${sale.salePrice}`],
+        ),
     },
     {
       key: "totalSalePrice",
       header: "Total Sale Price",
-      cell: (sale) => (
-        <div className="space-y-1">
-          {(sale.items?.length ? sale.items : []).map((item) => (
-            <div key={item.id}>₹{item.totalSalePrice}</div>
-          ))}
-          {!sale.items?.length && <div>₹{sale.totalSalePrice || 0}</div>}
-        </div>
-      ),
+      cell: (sale) =>
+        renderStackedValues(
+          sale.items?.length
+            ? sale.items.map((item) => `₹${item.totalSalePrice}`)
+            : [`₹${sale.totalSalePrice || 0}`],
+        ),
     },
     {
       key: "netTotalSalePrice",
@@ -585,17 +601,10 @@ export const Sales = () => {
       <Card className="mb-6 p-6">
         <form onSubmit={submit} className="space-y-5">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <FormField label="Sale Number">
+            <FormField label="Invoice Number">
               <Input
-                inputMode="numeric"
-                pattern="[0-9]*"
-                value={form.saleNumber}
-                onChange={(event) =>
-                  setForm((current) => ({
-                    ...current,
-                    saleNumber: event.target.value.replace(/\D/g, ""),
-                  }))
-                }
+                readOnly
+                value={form.saleNumber || "Auto-generated on submit"}
               />
             </FormField>
             <FormField label="Party" required>
@@ -700,7 +709,7 @@ export const Sales = () => {
                   key={line.rowId}
                   className="space-y-3 rounded-lg border border-border-gold/60 p-3"
                 >
-                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+                  <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
                     <FormField label={`Product Code ${index + 1}`} required>
                       <Select
                         required
@@ -733,16 +742,16 @@ export const Sales = () => {
                       <Input readOnly value={line.supplierName} />
                     </FormField>
                   </div>
-                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]">
-                    <FormField label="Quantity" required>
-                      <div className="flex gap-2">
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6 xl:grid-cols-12">
+                    <FormField label="Quantity" required className="xl:col-span-3">
+                      <div className="flex flex-col gap-2 sm:flex-row">
                         <Input
                           required
                           min="1"
                           type="text"
                           inputMode="numeric"
                           pattern="[0-9]*"
-                          className="w-24"
+                          className="sm:w-24"
                           value={line.quantity}
                           onChange={(event) =>
                             setLine(line.rowId, (currentLine) => ({
@@ -759,7 +768,7 @@ export const Sales = () => {
                               unit: event.target.value as SaleLineForm["unit"],
                             }))
                           }
-                          className="w-32"
+                          className="sm:w-32"
                         >
                           <option value="PIECES">Pieces</option>
                           <option value="DOZEN">Dozen</option>
@@ -777,7 +786,7 @@ export const Sales = () => {
                         </p>
                       )}
                     </FormField>
-                    <FormField label="Purchase Price">
+                    <FormField label="Purchase Price" className="xl:col-span-2">
                       <Input
                         min="0"
                         type="number"
@@ -798,13 +807,13 @@ export const Sales = () => {
                         </p>
                       )}
                     </FormField>
-                    <FormField label="Total Purchase Amount">
+                    <FormField label="Total Purchase Amount" className="xl:col-span-2">
                       <Input
                         readOnly
                         value={line.productCode ? lineTotalPurchaseAmount(line) : ""}
                       />
                     </FormField>
-                    <FormField label="Sale Price" required>
+                    <FormField label="Sale Price" required className="xl:col-span-2">
                       <Input
                         required
                         min="0"
@@ -818,10 +827,10 @@ export const Sales = () => {
                         }
                       />
                     </FormField>
-                    <FormField label="Total Sale Price">
+                    <FormField label="Total Sale Price" className="xl:col-span-2">
                       <Input readOnly value={line.productCode ? lineTotal(line) : ""} />
                     </FormField>
-                    <div className="flex items-end">
+                    <div className="flex items-end xl:col-span-1">
                       <Button
                         type="button"
                         variant="outline"
@@ -860,20 +869,38 @@ export const Sales = () => {
       </Card>
 
       <Card className="mb-6 p-4">
-        <div className="relative max-w-sm">
-          <Search
-            size={18}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary"
-          />
-          <Input
-            value={search}
-            onChange={(event) => {
-              setSearch(event.target.value);
-              setPage(1);
-            }}
-            placeholder="Search sales"
-            className="pl-9"
-          />
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="relative max-w-sm flex-1">
+            <Search
+              size={18}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary"
+            />
+            <Input
+              value={search}
+              onChange={(event) => {
+                setSearch(event.target.value);
+                setPage(1);
+              }}
+              placeholder="Search sales"
+              className="pl-9"
+            />
+          </div>
+          <div className="sm:w-72">
+            <Select
+              value={invoiceFilter}
+              onChange={(event) => {
+                setInvoiceFilter(event.target.value);
+                setPage(1);
+              }}
+            >
+              <option value="">All Invoice Numbers</option>
+              {invoiceOptions.map((invoiceNumber) => (
+                <option key={invoiceNumber} value={invoiceNumber}>
+                  {invoiceNumber}
+                </option>
+              ))}
+            </Select>
+          </div>
         </div>
       </Card>
 
