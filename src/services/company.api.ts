@@ -22,6 +22,27 @@ const request = async <T>(path: string, options: RequestInit = {}): Promise<T> =
   return data as T
 }
 
+const requestBlob = async (path: string, options: RequestInit = {}) => {
+  const token = localStorage.getItem('erp_access_token')
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    credentials: 'include',
+    ...options,
+    headers: {
+      ...(options.headers || {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  })
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}))
+    throw data as ApiError
+  }
+
+  const blob = await response.blob()
+  const disposition = response.headers.get('content-disposition') || ''
+  const match = disposition.match(/filename="([^"]+)"/)
+  return { blob, fileName: match?.[1] || 'company-backup.sql' }
+}
+
 export interface ProfileUser {
   id: number
   name: string
@@ -51,6 +72,7 @@ export const companyApi = {
   get: () => request<{ company: Company }>('/company').then((res) => res.company),
   update: (payload: Partial<Company>) => request<{ company: Company }>('/company', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }),
   getProfile: () => request<CompanyProfileResponse>('/company/profile'),
+  downloadBackup: () => requestBlob('/company/backup'),
   updateUserProfile: (userId: number, payload: FormData) => request<{ message: string; user: ProfileUser }>(`/company/profile/users/${userId}`, { method: 'PUT', body: payload }),
   deleteUserProfile: (userId: number) => request<{ message: string }>(`/company/profile/users/${userId}`, { method: 'DELETE' }),
 }

@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import type { FormEvent, ChangeEvent } from 'react'
-import { Building2, CalendarDays, ChevronRight, FileBadge2, FileUser, IdCard, LockKeyhole, Mail, Phone, Shield, Trash2, Upload, Users } from 'lucide-react'
+import { Building2, CalendarDays, ChevronRight, Download, FileBadge2, FileUser, IdCard, LockKeyhole, Mail, Phone, Shield, Trash2, Upload, Users } from 'lucide-react'
 import { useToast, Button, Card, Alert, Modal } from '../../components/ui'
 import { useAuth } from '../../hooks/useAuth'
 import { FormField, Input, Select, Textarea } from '../../components/forms'
@@ -99,6 +99,8 @@ export const Settings = () => {
   const [branding, setBranding] = useState<Branding | null>(null)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+  const [backupDownloading, setBackupDownloading] = useState(false)
+  const [lastBackupDownloadedAt, setLastBackupDownloadedAt] = useState<string | null>(() => localStorage.getItem('erp_last_backup_downloaded_at'))
   const [activeTab, setActiveTab] = useState<SettingsTab>('company')
   const [createUserModalOpen, setCreateUserModalOpen] = useState(false)
 
@@ -465,6 +467,35 @@ export const Settings = () => {
     }
   }
 
+  const handleDownloadBackup = async () => {
+    if (user?.role.name !== 'ADMIN') {
+      toast({ title: 'Access denied', description: 'Only admin can download backups.', variant: 'error' })
+      return
+    }
+
+    setBackupDownloading(true)
+    try {
+      const { blob, fileName } = await companyApi.downloadBackup()
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = fileName
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(url)
+      const downloadedAt = new Date().toISOString()
+      localStorage.setItem('erp_last_backup_downloaded_at', downloadedAt)
+      setLastBackupDownloadedAt(downloadedAt)
+      toast({ title: 'Backup downloaded', description: 'Your company backup file has been downloaded.', variant: 'success' })
+    } catch (err) {
+      const message = (err as ApiError).message || 'Failed to download backup'
+      toast({ title: 'Backup failed', description: message, variant: 'error' })
+    } finally {
+      setBackupDownloading(false)
+    }
+  }
+
   const handlePasswordSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setPasswordError('')
@@ -504,28 +535,43 @@ export const Settings = () => {
   const renderCompanyProfile = () => {
     if (!company) return <Card className="p-6"><p className="text-sm text-text-secondary">No company data available.</p></Card>
     return (
-      <Card className="p-6">
-        <h3 className="mb-4 text-lg font-semibold text-secondary">Company Profile</h3>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <p className="text-sm text-text-secondary">Company Name</p>
-            <p className="text-sm font-medium text-secondary">{company.name}</p>
+      <div className="space-y-6">
+        <Card className="p-6">
+          <div className="mb-4 flex items-start justify-between gap-3">
+            <h3 className="text-lg font-semibold text-secondary">Company Profile</h3>
+            {user?.role.name === 'ADMIN' && (
+              <Button type="button" variant="outline" className="h-8 px-3 text-xs" onClick={() => void handleDownloadBackup()} loading={backupDownloading}>
+                <Download size={14} />
+                Backup
+              </Button>
+            )}
           </div>
-          <div>
-            <p className="text-sm text-text-secondary">Created At</p>
-            <p className="text-sm font-medium text-secondary">{formatDateTime(company.createdAt)}</p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <p className="text-sm text-text-secondary">Company Name</p>
+              <p className="text-sm font-medium text-secondary">{company.name}</p>
+            </div>
+            <div>
+              <p className="text-sm text-text-secondary">Created At</p>
+              <p className="text-sm font-medium text-secondary">{formatDateTime(company.createdAt)}</p>
+            </div>
+            <div>
+              <p className="text-sm text-text-secondary">Updated At</p>
+              <p className="text-sm font-medium text-secondary">{formatDateTime(company.updatedAt)}</p>
+            </div>
+            <div>
+              <p className="text-sm text-text-secondary">Total Users</p>
+              <p className="text-sm font-medium text-secondary">{companyUsers.length}</p>
+            </div>
           </div>
-          <div>
-            <p className="text-sm text-text-secondary">Updated At</p>
-            <p className="text-sm font-medium text-secondary">{formatDateTime(company.updatedAt)}</p>
-          </div>
-          <div>
-            <p className="text-sm text-text-secondary">Total Users</p>
-            <p className="text-sm font-medium text-secondary">{companyUsers.length}</p>
-          </div>
-        </div>
-        <p className="mt-4 text-xs text-text-secondary">Go to the User Management tab to view and manage detailed user profiles and documents.</p>
-      </Card>
+          {user?.role.name === 'ADMIN' && (
+            <p className="mt-4 text-xs text-text-secondary">
+              Last backup downloaded at: <span className="font-medium text-secondary">{lastBackupDownloadedAt ? formatDateTime(lastBackupDownloadedAt) : 'Never'}</span>
+            </p>
+          )}
+          <p className="mt-4 text-xs text-text-secondary">Go to the User Management tab to view and manage detailed user profiles and documents.</p>
+        </Card>
+      </div>
     )
   }
 
