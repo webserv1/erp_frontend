@@ -38,7 +38,7 @@ export const KpiCard = ({
 }) => {
   const colors = accentClasses[accent];
   return (
-    <article className="premium-card flex h-[118px] w-[156px] max-w-full flex-col items-center justify-center gap-1 overflow-hidden px-3 py-3 text-center">
+    <article className="premium-card flex h-[138px] w-[156px] max-w-full flex-col items-center justify-center gap-1 px-3 py-3 text-center">
       <span
         className={`grid size-8 place-items-center rounded-lg ${colors.badge}`}
       >
