@@ -185,6 +185,7 @@ export const SupplierMaster = () => {
     { key: "name", header: "Supplier Name" },
     { key: "mobile", header: "Mobile", width: "140px" },
     { key: "email", header: "Email" },
+    { key: "address", header: "Address", width: "220px" },
     { key: "city", header: "City" },
     { key: "state", header: "State" },
     { key: "netTotalPurchaseAmount", header: "Net Total Purchase", cell: (row) => `₹${row.netTotalPurchaseAmount}` },
