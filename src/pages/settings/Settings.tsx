@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import type { FormEvent, ChangeEvent } from 'react'
-import { Building2, CalendarDays, ChevronRight, Download, FileBadge2, FileUser, IdCard, LockKeyhole, Mail, Phone, Shield, Trash2, Upload, Users } from 'lucide-react'
+import { Building2, CalendarDays, ChevronRight, Download, Eye, EyeOff, FileBadge2, FileUser, IdCard, LockKeyhole, Mail, Phone, Shield, Trash2, Upload, Users } from 'lucide-react'
 import { useToast, Button, Card, Alert, Modal } from '../../components/ui'
 import { useAuth } from '../../hooks/useAuth'
 import { FormField, Input, Select, Textarea } from '../../components/forms'
@@ -122,6 +122,8 @@ export const Settings = () => {
   const [userForm, setUserForm] = useState({ name: '', email: '', password: '', confirmPassword: '', role: 'WORKER' as 'MANAGER' | 'WORKER', mobile: '', dob: '', gender: 'OTHER', address: '' })
   const [userFiles, setUserFiles] = useState<{ photo?: File; signature?: File; pan?: File; aadhaar?: File }>({})
   const [userError, setUserError] = useState('')
+  const [showCreateUserPassword, setShowCreateUserPassword] = useState(false)
+  const [showCreateUserConfirmPassword, setShowCreateUserConfirmPassword] = useState(false)
 
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
   const [passwordError, setPasswordError] = useState('')
@@ -365,12 +367,16 @@ export const Settings = () => {
     setUserError('')
     setUserForm({ name: '', email: '', password: '', confirmPassword: '', role: 'WORKER', mobile: '', dob: '', gender: 'OTHER', address: '' })
     setUserFiles({})
+    setShowCreateUserPassword(false)
+    setShowCreateUserConfirmPassword(false)
     setCreateUserModalOpen(true)
   }
 
   const closeCreateUserModal = () => {
     setCreateUserModalOpen(false)
     setUserError('')
+    setShowCreateUserPassword(false)
+    setShowCreateUserConfirmPassword(false)
   }
 
   const openEditProfile = (profile: ProfileUser) => {
@@ -947,10 +953,42 @@ export const Settings = () => {
               <Input required type="date" value={userForm.dob} onChange={(e) => setUserForm({ ...userForm, dob: e.target.value })} />
             </FormField>
             <FormField label="Password" required>
-              <Input required type="password" value={userForm.password} onChange={(e) => setUserForm({ ...userForm, password: e.target.value })} />
+              <div className="relative">
+                <Input
+                  required
+                  type={showCreateUserPassword ? 'text' : 'password'}
+                  value={userForm.password}
+                  onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCreateUserPassword((visible) => !visible)}
+                  className="absolute inset-y-0 right-0 grid w-10 place-items-center text-text-secondary hover:text-secondary"
+                  aria-label={showCreateUserPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showCreateUserPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
             </FormField>
             <FormField label="Confirm Password" required>
-              <Input required type="password" value={userForm.confirmPassword} onChange={(e) => setUserForm({ ...userForm, confirmPassword: e.target.value })} />
+              <div className="relative">
+                <Input
+                  required
+                  type={showCreateUserConfirmPassword ? 'text' : 'password'}
+                  value={userForm.confirmPassword}
+                  onChange={(e) => setUserForm({ ...userForm, confirmPassword: e.target.value })}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCreateUserConfirmPassword((visible) => !visible)}
+                  className="absolute inset-y-0 right-0 grid w-10 place-items-center text-text-secondary hover:text-secondary"
+                  aria-label={showCreateUserConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+                >
+                  {showCreateUserConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
             </FormField>
             <FormField label="Gender" required>
               <Select required value={userForm.gender} onChange={(e) => setUserForm({ ...userForm, gender: e.target.value })}>
