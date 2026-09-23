@@ -172,9 +172,45 @@ export const Settings = () => {
 
   const resolveMediaUrl = (url?: string | null) => {
     if (!url) return null
-    if (url.startsWith('http://') || url.startsWith('https://')) return url
+    const rawValue = String(url).trim()
+    if (!rawValue) return null
+
     const apiBase = import.meta.env.VITE_API_BASE_URL || ''
-    return `${apiBase.replace(/\/api\/?$/, '')}${url}`
+    let backendOrigin = ''
+    try {
+      backendOrigin = new URL(apiBase).origin
+    } catch {
+      backendOrigin = ''
+    }
+
+    if (rawValue.startsWith('http://') || rawValue.startsWith('https://')) {
+      try {
+        const parsedUrl = new URL(rawValue)
+        if (
+          backendOrigin
+          && parsedUrl.origin !== backendOrigin
+          && /^\/(api\/)?uploads\//i.test(parsedUrl.pathname)
+        ) {
+          const normalizedPath = parsedUrl.pathname.replace(/^\/api\//i, '/')
+          return `${backendOrigin}${normalizedPath}${parsedUrl.search}`
+        }
+      } catch {
+        return rawValue
+      }
+      return rawValue
+    }
+
+    let normalizedPath = rawValue
+      .replace(/^api\/uploads\//i, '/uploads/')
+      .replace(/^\/api\/uploads\//i, '/uploads/')
+    if (!normalizedPath.startsWith('/')) {
+      normalizedPath = `/${normalizedPath}`
+    }
+
+    if (backendOrigin) {
+      return `${backendOrigin}${normalizedPath}`
+    }
+    return normalizedPath
   }
 
   const loadBranding = async () => {
