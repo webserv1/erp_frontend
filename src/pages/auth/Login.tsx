@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { LockKeyhole, Mail } from 'lucide-react'
+import { Eye, EyeOff, LockKeyhole, Mail } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { FormField, Input } from '../../components/forms'
 import { AuthLayout } from '../../components/layout'
@@ -11,6 +11,7 @@ import type { ApiError } from '../../types/auth.types'
 export const Login = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const { login } = useAuth()
@@ -42,7 +43,24 @@ export const Login = () => {
           <Input required type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="Enter your email" />
         </FormField>
         <FormField label="Password" icon={<LockKeyhole size={18} />}>
-          <Input required type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Enter your password" />
+          <div className="relative">
+            <Input
+              required
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="Enter your password"
+              className="pr-10"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((visible) => !visible)}
+              className="absolute inset-y-0 right-0 grid w-10 place-items-center text-text-secondary hover:text-secondary"
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+            >
+              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          </div>
         </FormField>
         {error && <Alert variant="error">{error}</Alert>}
         <Button type="submit" loading={submitting} className="w-full">Sign in</Button>
