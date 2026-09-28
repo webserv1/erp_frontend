@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { LockKeyhole, Mail } from 'lucide-react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { FormField, Input } from '../../components/forms'
 import { AuthLayout } from '../../components/layout'
 import { Alert, Button, useToast } from '../../components/ui'
@@ -46,9 +46,9 @@ export const Login = () => {
         </FormField>
         {error && <Alert variant="error">{error}</Alert>}
         <Button type="submit" loading={submitting} className="w-full">Sign in</Button>
-        <p className="text-center text-sm text-text-secondary">
+        {/* <p className="text-center text-sm text-text-secondary">
           Dont have an account! <Link className="font-semibold text-primary-dark hover:underline" to="/register">Signup</Link>
-        </p>
+        </p> */}
       </form>
     </AuthLayout>
   )
