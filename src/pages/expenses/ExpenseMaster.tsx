@@ -29,20 +29,23 @@ type FormState = {
   details: string;
   amount: string;
   paymentMode: PaymentMode;
+  expenseDate: string;
   billFile: File | null;
   billUrl: string;
   status: boolean;
 };
 
-const emptyForm: FormState = {
+const getTodayDate = () => new Date().toISOString().slice(0, 10);
+const createEmptyForm = (): FormState => ({
   category: "",
   details: "",
   amount: "",
   paymentMode: "CASH",
+  expenseDate: getTodayDate(),
   billFile: null,
   billUrl: "",
   status: true,
-};
+});
 
 const paymentModes = [
   { value: "UPI", label: "UPI" },
@@ -66,7 +69,7 @@ export const ExpenseMaster = () => {
     user?.company?.name.replace(/\s+/g, "").toLocaleLowerCase() ===
     "sqarsgarments";
 
-  const [form, setForm] = useState<FormState>(emptyForm);
+  const [form, setForm] = useState<FormState>(createEmptyForm);
   const [editing, setEditing] = useState<Expense | null>(null);
   const [viewing, setViewing] = useState<Expense | null>(null);
 
@@ -79,6 +82,8 @@ export const ExpenseMaster = () => {
   const [statusFilter, setStatusFilter] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [paymentModeFilter, setPaymentModeFilter] = useState("");
+  const [startDateFilter, setStartDateFilter] = useState("");
+  const [endDateFilter, setEndDateFilter] = useState("");
 
   const [summary, setSummary] = useState<{
     thisMonthTotal: number;
@@ -97,6 +102,8 @@ export const ExpenseMaster = () => {
           search: search || undefined,
           category: categoryFilter || undefined,
           paymentMode: paymentModeFilter || undefined,
+          startDate: startDateFilter || undefined,
+          endDate: endDateFilter || undefined,
           status:
             statusFilter === "ACTIVE"
               ? true
@@ -129,6 +136,8 @@ export const ExpenseMaster = () => {
     search,
     categoryFilter,
     paymentModeFilter,
+    startDateFilter,
+    endDateFilter,
     statusFilter,
     page,
     limit,
@@ -169,7 +178,7 @@ export const ExpenseMaster = () => {
   };
 
   const resetForm = () => {
-    setForm(emptyForm);
+    setForm(createEmptyForm());
     setEditing(null);
     if (billInputRef.current) billInputRef.current.value = "";
     if (billPreviewRef.current) URL.revokeObjectURL(billPreviewRef.current);
@@ -189,6 +198,7 @@ export const ExpenseMaster = () => {
       details: row.details,
       amount: String(row.amount),
       paymentMode: row.paymentMode,
+      expenseDate: (row.expenseDate || row.createdAt).slice(0, 10),
       billFile: null,
       billUrl: row.billUrl || "",
       status: row.status,
@@ -217,6 +227,7 @@ export const ExpenseMaster = () => {
       formData.append("details", form.details);
       formData.append("amount", String(Number(form.amount)));
       formData.append("paymentMode", form.paymentMode);
+      formData.append("expenseDate", form.expenseDate);
       formData.append("status", String(form.status));
       if (form.billFile) {
         formData.append("bill", form.billFile);
@@ -235,6 +246,8 @@ export const ExpenseMaster = () => {
         search: search || undefined,
         category: categoryFilter || undefined,
         paymentMode: paymentModeFilter || undefined,
+        startDate: startDateFilter || undefined,
+        endDate: endDateFilter || undefined,
         status:
           statusFilter === "ACTIVE"
             ? true
@@ -264,6 +277,8 @@ export const ExpenseMaster = () => {
         search: search || undefined,
         category: categoryFilter || undefined,
         paymentMode: paymentModeFilter || undefined,
+        startDate: startDateFilter || undefined,
+        endDate: endDateFilter || undefined,
         status:
           statusFilter === "ACTIVE"
             ? true
@@ -303,6 +318,17 @@ export const ExpenseMaster = () => {
       header: "Payment Mode",
       width: "120px",
       cell: (row) => row.paymentMode,
+    },
+    {
+      key: "expenseDate",
+      header: "Expense Date",
+      width: "140px",
+      cell: (row) =>
+        new Date(row.expenseDate || row.createdAt).toLocaleDateString("en-IN", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        }),
     },
     {
       key: "status",
@@ -459,6 +485,19 @@ export const ExpenseMaster = () => {
                 ))}
               </Select>
             </FormField>
+            <FormField label="Expense Date" required>
+              <Input
+                required
+                type="date"
+                value={form.expenseDate}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    expenseDate: e.target.value,
+                  })
+                }
+              />
+            </FormField>
             <FormField label="Bill">
               <input
                 ref={billInputRef}
@@ -590,6 +629,26 @@ export const ExpenseMaster = () => {
               <option value="ACTIVE">Active</option>
               <option value="INACTIVE">Inactive</option>
             </Select>
+            <Input
+              type="date"
+              value={startDateFilter}
+              onChange={(e) => {
+                setStartDateFilter(e.target.value);
+                setPage(1);
+              }}
+              className="sm:max-w-40"
+              placeholder="Start date"
+            />
+            <Input
+              type="date"
+              value={endDateFilter}
+              onChange={(e) => {
+                setEndDateFilter(e.target.value);
+                setPage(1);
+              }}
+              className="sm:max-w-40"
+              placeholder="End date"
+            />
           </div>
         </div>
       </Card>
@@ -658,6 +717,20 @@ export const ExpenseMaster = () => {
                   </td>
                   <td className="px-4 py-2 text-secondary">
                     {viewing.paymentMode}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-2 font-semibold text-text-secondary">
+                    Expense Date
+                  </td>
+                  <td className="px-4 py-2 text-secondary">
+                    {new Date(
+                      viewing.expenseDate || viewing.createdAt,
+                    ).toLocaleDateString("en-IN", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                    })}
                   </td>
                 </tr>
                 {viewing.billUrl && (

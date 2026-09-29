@@ -333,6 +333,7 @@ export interface Expense {
   details: string;
   amount: number;
   paymentMode: "UPI" | "CASH";
+  expenseDate: string;
   billUrl?: string;
   createdById?: number;
   status: boolean;

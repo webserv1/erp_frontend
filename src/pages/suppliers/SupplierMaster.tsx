@@ -265,37 +265,32 @@ export const SupplierMaster = () => {
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
               />
             </FormField>
-            <FormField label="Address" required>
+            <FormField label="Address">
               <Input
-                required
                 value={form.address}
                 onChange={(e) => setForm({ ...form, address: e.target.value })}
               />
             </FormField>
-            <FormField label="City" required>
+            <FormField label="City">
               <Input
-                required
                 value={form.city}
                 onChange={(e) => setForm({ ...form, city: e.target.value })}
               />
             </FormField>
-            <FormField label="State" required>
+            <FormField label="State">
               <Input
-                required
                 value={form.state}
                 onChange={(e) => setForm({ ...form, state: e.target.value })}
               />
             </FormField>
-            <FormField label="Country" required>
+            <FormField label="Country">
               <Input
-                required
                 value={form.country}
                 onChange={(e) => setForm({ ...form, country: e.target.value })}
               />
             </FormField>
-            <FormField label="Pincode" required>
+            <FormField label="Pincode">
               <Input
-                required
                 inputMode="numeric"
                 pattern="[0-9]*"
                 value={form.pincode}
