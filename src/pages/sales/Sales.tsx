@@ -575,12 +575,22 @@ export const Sales = () => {
   const actions: DataTableAction<Sale>[] = [
     { label: <Eye size={16} />, onClick: setViewing, title: "View" },
     {
-      label: <FileText size={16} />,
+      label: (sale) => (
+        <FileText
+          size={16}
+          className={
+            Number(sale.remainingAmount || 0) <= 0 ||
+            String(sale.paymentStatus || "").toUpperCase() === "PAID"
+              ? "text-green-700"
+              : ""
+          }
+        />
+      ),
       onClick: openInvoice,
       title: "Generate Invoice",
       className: (sale) =>
         Number(sale.remainingAmount || 0) <= 0
-          ? "text-green-600 hover:bg-green-50"
+          ? "!text-green-700 hover:!bg-green-50"
           : "",
     },
     { label: <Pencil size={16} />, onClick: edit, title: "Edit" },
@@ -1082,6 +1092,14 @@ export const Sales = () => {
                   </td>
                   <td className="px-4 py-2 text-secondary">
                     ₹{viewing.paidAmount}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-2 font-semibold text-text-secondary">
+                    Discount
+                  </td>
+                  <td className="px-4 py-2 text-secondary">
+                    ₹{viewing.discount || 0}
                   </td>
                 </tr>
                 <tr>

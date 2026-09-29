@@ -19,6 +19,32 @@ const currency = (value: number) =>
 const unitMultiplier = (unit: "PIECES" | "DOZEN") => (unit === "DOZEN" ? 12 : 1);
 const compactLine = (...parts: Array<string | null | undefined>) =>
   parts.filter((part) => part && String(part).trim()).join(", ");
+const isSqarsCompany = (name?: string | null) =>
+  String(name || "").trim().toLowerCase() === "sqars garments";
+const getInvoiceLogoSrc = (invoice: SaleInvoice) =>
+  invoice.company.logoUrl || (isSqarsCompany(invoice.company.name) ? "/sqars-logo.png.jpeg" : null);
+const pdfCurrency = (value: number) =>
+  `INR ${(Number(value) || 0).toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+
+const readImageDataUrl = async (url: string): Promise<string | null> => {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) return null;
+    const blob = await response.blob();
+    return await new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () =>
+        resolve(typeof reader.result === "string" ? reader.result : null);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+};
 
 export const SaleInvoiceModal = ({
   invoice,
@@ -49,45 +75,71 @@ export const SaleInvoiceModal = ({
   const netTotalSalePrice =
     sale.netTotalSalePrice ||
     saleItems.reduce((sum, item) => sum + item.totalSalePrice, 0);
+  const discount = Number(sale.discount) || 0;
+  const remainingAmount = Number(sale.remainingAmount) || 0;
+  const logoSrc = getInvoiceLogoSrc(invoice);
   const date = new Date(invoice.issueDate).toLocaleDateString("en-IN", {
     day: "2-digit",
     month: "short",
     year: "numeric",
   });
 
-  const downloadPdf = () => {
+  const downloadPdf = async () => {
     const pdf = new jsPDF({ unit: "mm", format: "a4" });
     const left = 15;
+    const right = 195;
+    const lineGap = 4;
+    const writeRight = (text: string, x: number, yAxis: number) =>
+      pdf.text(text, x - pdf.getTextWidth(text), yAxis);
+    const logoDataUrl = logoSrc ? await readImageDataUrl(logoSrc) : null;
     let y = 18;
+    const logoSize = 12;
+    const companyTextX = left + (logoDataUrl ? logoSize + 3 : 0);
+
+    if (logoDataUrl) {
+      try {
+        pdf.addImage(logoDataUrl, "JPEG", left, y - 3, logoSize, logoSize);
+      } catch {
+        // Ignore logo rendering errors and continue generating invoice.
+      }
+    }
+
     pdf.setFontSize(12);
     pdf.setTextColor(17, 24, 39);
-    pdf.text(invoice.company.name, left, y);
+    pdf.text(invoice.company.name, companyTextX, y);
     pdf.setFontSize(8.5);
     pdf.setTextColor(75, 85, 99);
-    pdf.text("Sales Invoice", left, y + 5);
+    pdf.text("Sales Invoice", companyTextX, y + 5);
+    let companyBottomY = y + 5;
+
     const companyAddress = compactLine(
       invoice.company.address,
       invoice.company.mobile ? `Mob: ${invoice.company.mobile}` : null,
       invoice.company.email ? `Email: ${invoice.company.email}` : null,
     );
     if (companyAddress) {
-      const lines = pdf.splitTextToSize(companyAddress, 95);
-      pdf.text(lines, left, y + 9);
+      const lines = pdf.splitTextToSize(companyAddress, 90);
+      pdf.text(lines, companyTextX, y + 9);
+      companyBottomY = y + 9 + (lines.length - 1) * 3.8;
     }
 
+    const invoiceBoxX = 125;
+    const invoiceBoxW = 70;
+    const invoiceBoxTop = y + 8;
+    const invoiceBoxBottom = invoiceBoxTop + 24;
     pdf.setFontSize(22);
     pdf.setTextColor(107, 114, 128);
-    pdf.text("INVOICE", 145, y + 2);
+    pdf.text("INVOICE", 146, y + 2);
     pdf.setDrawColor(156, 163, 175);
-    pdf.rect(120, y + 8, 75, 24);
+    pdf.rect(invoiceBoxX, invoiceBoxTop, invoiceBoxW, 24);
     pdf.setFontSize(9);
     pdf.setTextColor(17, 24, 39);
-    pdf.text("INVOICE #", 124, y + 14);
-    pdf.text(String(invoice.invoiceNumber), 148, y + 14);
-    pdf.line(120, y + 17, 195, y + 17);
-    pdf.text("DATE", 124, y + 22);
-    pdf.text(date, 148, y + 22);
-    y += 42;
+    pdf.text("INVOICE #", invoiceBoxX + 4, y + 14);
+    pdf.text(String(invoice.invoiceNumber), invoiceBoxX + 28, y + 14);
+    pdf.line(invoiceBoxX, y + 17, invoiceBoxX + invoiceBoxW, y + 17);
+    pdf.text("DATE", invoiceBoxX + 4, y + 22);
+    pdf.text(date, invoiceBoxX + 28, y + 22);
+    y = Math.max(companyBottomY, invoiceBoxBottom) + 12;
 
     pdf.setFillColor(229, 231, 235);
     pdf.rect(left, y, 88, 8, "F");
@@ -128,41 +180,62 @@ export const SaleInvoiceModal = ({
     }
     y += 11;
 
+    const tableTop = y;
+    const col1 = left;
+    const col2 = 130;
+    const col3 = 148;
+    const col4 = 173;
+    const col5 = right;
     pdf.setFillColor(229, 231, 235);
-    pdf.rect(left, y, 180, 8, "F");
+    pdf.rect(col1, y, col5 - col1, 8, "F");
     pdf.setFontSize(9);
-    pdf.text("DESCRIPTION", left + 3, y + 5.5);
-    pdf.text("QTY", 132, y + 5.5);
-    pdf.text("UNIT PRICE", 147, y + 5.5);
-    pdf.text("AMOUNT", 176, y + 5.5);
+    pdf.text("DESCRIPTION", col1 + 3, y + 5.5);
+    pdf.text("QTY", col2 + 2, y + 5.5);
+    pdf.text("UNIT PRICE", col3 + 2, y + 5.5);
+    pdf.text("AMOUNT", col4 + 2, y + 5.5);
     y += 11;
     pdf.setFontSize(8.5);
+
     saleItems.forEach((item) => {
       const description = `${item.productName} (${item.productCode})\nBrand: ${names(item.brands)} | Color: ${names(item.colors)} | Size: ${names(item.sizes)}`;
-      const lines = pdf.splitTextToSize(description, 112);
-      pdf.text(lines, left + 3, y);
-      pdf.text(`${item.quantity} ${item.unit}`, 132, y);
-      pdf.text(currency(item.salePrice), 147, y);
-      pdf.text(currency(item.totalSalePrice), 176, y);
-      y += Math.max(12, lines.length * 4 + 2);
+      const lines = pdf.splitTextToSize(description, col2 - col1 - 6);
+      const rowHeight = Math.max(12, lines.length * 4 + 2);
+      pdf.text(lines, col1 + 3, y);
+      pdf.text(`${item.quantity} ${item.unit}`, col2 + 2, y);
+      writeRight(pdfCurrency(item.salePrice), col4 - 2, y);
+      writeRight(pdfCurrency(item.totalSalePrice), col5 - 2, y);
+      y += rowHeight;
       pdf.setDrawColor(229, 231, 235);
-      pdf.line(left, y, left + 180, y);
-      y += 4;
+      pdf.line(col1, y, col5, y);
+      y += 3;
     });
+
+    const tableBottom = y - 3;
+    pdf.setDrawColor(209, 213, 219);
+    pdf.rect(col1, tableTop, col5 - col1, tableBottom - tableTop);
+    pdf.line(col2, tableTop, col2, tableBottom);
+    pdf.line(col3, tableTop, col3, tableBottom);
+    pdf.line(col4, tableTop, col4, tableBottom);
 
     y += 3;
     pdf.setFontSize(10);
     pdf.setTextColor(17, 24, 39);
-    pdf.text(`Grand Total Amount: ${currency(netTotalSalePrice)}`, 122, y);
-    y += 6;
-    pdf.text(`Paid Amount: ${currency(sale.paidAmount)}`, 122, y);
-    y += 6;
-    pdf.text(`Payment Status: ${sale.paymentStatus}`, 122, y);
-    y += 8;
-    if (sale.remarks) {
-      pdf.setFontSize(8.5);
-      pdf.text(`Remarks: ${sale.remarks}`, left, y);
-    }
+    const summaryLabelX = 130;
+    const summaryValueX = right - 2;
+    pdf.text("Grand Total Amount:", summaryLabelX, y);
+    writeRight(pdfCurrency(netTotalSalePrice), summaryValueX, y);
+    y += lineGap + 1;
+    pdf.text("Paid Amount:", summaryLabelX, y);
+    writeRight(pdfCurrency(sale.paidAmount), summaryValueX, y);
+    y += lineGap + 1;
+    pdf.text("Discount:", summaryLabelX, y);
+    writeRight(pdfCurrency(discount), summaryValueX, y);
+    y += lineGap + 1;
+    pdf.text("Remaining Amount:", summaryLabelX, y);
+    writeRight(pdfCurrency(remainingAmount), summaryValueX, y);
+    y += lineGap + 1;
+    pdf.text("Payment Status:", summaryLabelX, y);
+    writeRight(String(sale.paymentStatus || "-"), summaryValueX, y);
     pdf.save(`${invoice.invoiceNumber}.pdf`);
   };
 
@@ -182,11 +255,20 @@ export const SaleInvoiceModal = ({
         <div className="overflow-y-auto bg-gray-100 p-6">
           <article className="mx-auto max-w-4xl bg-white p-8 shadow-sm">
             <header className="flex items-start justify-between">
-              <div>
-                <h1 className="text-2xl font-bold text-secondary">
-                  {invoice.company.name}
-                </h1>
-                <p className="mt-1 text-sm text-text-secondary">Sales Invoice</p>
+              <div className="flex items-center gap-3">
+                {logoSrc && (
+                  <img
+                    src={logoSrc}
+                    alt={invoice.company.name}
+                    className="size-12 rounded-full border border-primary/30 object-cover"
+                  />
+                )}
+                <div>
+                  <h1 className="text-2xl font-bold text-secondary">
+                    {invoice.company.name}
+                  </h1>
+                  <p className="mt-1 text-sm text-text-secondary">Sales Invoice</p>
+                </div>
               </div>
               <div className="text-right">
                 <p className="text-4xl font-bold tracking-wide text-gray-500">
@@ -295,17 +377,19 @@ export const SaleInvoiceModal = ({
                 <span className="font-semibold">{currency(sale.paidAmount)}</span>
               </div>
               <div className="flex justify-between">
+                <span className="text-text-secondary">Discount</span>
+                <span className="font-semibold">{currency(discount)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-text-secondary">Remaining Amount</span>
+                <span className="font-semibold">{currency(remainingAmount)}</span>
+              </div>
+              <div className="flex justify-between">
                 <span className="text-text-secondary">Payment Status</span>
                 <span className="font-semibold">{sale.paymentStatus}</span>
               </div>
             </section>
 
-            {sale.remarks && (
-              <section className="mt-6 border-t border-gray-200 pt-4 text-sm">
-                <p className="font-semibold text-secondary">Remarks</p>
-                <p className="mt-1 text-text-secondary">{sale.remarks}</p>
-              </section>
-            )}
           </article>
         </div>
         <div className="flex justify-end gap-3 border-t border-gray-200 px-6 py-4">
