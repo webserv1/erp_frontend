@@ -44,6 +44,7 @@ type Form = {
   partyId: string;
   partyName: string;
   paidAmount: string;
+  discount: string;
   paymentStatus: "UNPAID" | "PARTIAL" | "PAID" | "OVERDUE";
   remarks: string;
   status: boolean;
@@ -73,6 +74,7 @@ const empty: Form = {
   partyId: "",
   partyName: "",
   paidAmount: "0",
+  discount: "0",
   paymentStatus: "UNPAID",
   remarks: "",
   status: true,
@@ -320,6 +322,7 @@ export const Sales = () => {
       partyId: sale.partyId ? String(sale.partyId) : "",
       partyName: sale.partyName || "",
       paidAmount: String(sale.paidAmount || 0),
+      discount: String(sale.discount || 0),
       paymentStatus: sale.paymentStatus,
       remarks: sale.remarks || "",
       status: sale.status,
@@ -372,6 +375,7 @@ export const Sales = () => {
       })),
       netTotalPurchaseAmount,
       netTotalSalePrice,
+      discount: numberOrZero(form.discount),
       paidAmount: numberOrZero(form.paidAmount),
       paymentStatus: form.paymentStatus,
       remarks: form.remarks || undefined,
@@ -542,6 +546,11 @@ export const Sales = () => {
       ),
     },
     {
+      key: "discount",
+      header: "Discount",
+      cell: (sale) => `₹${sale.discount || 0}`,
+    },
+    {
       key: "paidAmount",
       header: "Paid Amount",
       cell: (sale) => `₹${sale.paidAmount}`,
@@ -569,6 +578,10 @@ export const Sales = () => {
       label: <FileText size={16} />,
       onClick: openInvoice,
       title: "Generate Invoice",
+      className: (sale) =>
+        Number(sale.remainingAmount || 0) <= 0
+          ? "text-green-600 hover:bg-green-50"
+          : "",
     },
     { label: <Pencil size={16} />, onClick: edit, title: "Edit" },
     {
@@ -673,6 +686,19 @@ export const Sales = () => {
                 <option value="PAID">Paid</option>
                 <option value="OVERDUE">Overdue</option>
               </Select>
+            </FormField>
+            <FormField label="Discount">
+              <Input
+                min="0"
+                type="number"
+                value={form.discount}
+                onChange={(event) =>
+                  setForm((current) => ({
+                    ...current,
+                    discount: event.target.value,
+                  }))
+                }
+              />
             </FormField>
             <FormField label="Remarks">
               <Input

@@ -23,6 +23,7 @@ export type SalePayload = {
   }[];
   netTotalPurchaseAmount?: number;
   netTotalSalePrice: number;
+  discount?: number;
   paidAmount?: number;
   paymentStatus?: "UNPAID" | "PARTIAL" | "PAID" | "OVERDUE";
   remarks?: string;
@@ -197,6 +198,7 @@ const normalizeSale = (entry: Sale): Sale => {
       numberOrZero(entry.totalSalePrice) || numberOrZero(normalizedItems[0]?.totalSalePrice),
     netTotalSalePrice,
     netTotalPurchaseAmount,
+    discount: numberOrZero(entry.discount),
     perSaleProfit:
       numberOrZero(entry.perSaleProfit || entry.persaleprofit) ||
       netTotalSalePrice - netTotalPurchaseAmount,

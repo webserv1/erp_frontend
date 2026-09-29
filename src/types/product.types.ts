@@ -232,6 +232,7 @@ export interface Sale {
   netTotalpurchaseamount?: number;
   netTotalSalePrice?: number;
   NetTotalsaleprice?: number;
+  discount?: number;
   paidAmount: number;
   remainingAmount: number;
   paymentStatus: "UNPAID" | "PARTIAL" | "PAID" | "OVERDUE";
