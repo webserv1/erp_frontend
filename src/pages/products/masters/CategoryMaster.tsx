@@ -22,15 +22,10 @@ import type {
   Size,
 } from "../../../types/product.types";
 
-type UnitType = "PIECES" | "DOZEN";
 type MasterStatus = "ACTIVE" | "INACTIVE";
 
 type FormState = {
   name: string;
-  unit: UnitType;
-  quantity: string;
-  purchaseAmount: string;
-  saleAmount: string;
   status: MasterStatus;
   brandIds: number[];
   colorIds: number[];
@@ -42,10 +37,6 @@ type FormState = {
 
 const emptyForm: FormState = {
   name: "",
-  unit: "PIECES",
-  quantity: "",
-  purchaseAmount: "",
-  saleAmount: "",
   status: "ACTIVE",
   brandIds: [],
   colorIds: [],
@@ -56,11 +47,6 @@ const emptyForm: FormState = {
 };
 
 const categoryPresets = ["Top", "Jeans", "Shorts", "Kurta", "Mix"];
-const unitOptions = [
-  { value: "PIECES", label: "Pieces" },
-  { value: "DOZEN", label: "Dozen" },
-];
-
 const brandPresets = ["Sqars"];
 const colorPresets = [
   "Red",
@@ -150,11 +136,6 @@ export const CategoryMaster = () => {
     ),
     sizePresets,
   );
-  const totalPurchaseAmount =
-    Math.max(0, Number(form.quantity) || 0) *
-    (form.unit === "DOZEN" ? 12 : 1) *
-    Math.max(0, Number(form.purchaseAmount) || 0);
-
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -186,10 +167,6 @@ export const CategoryMaster = () => {
     setEditing(row);
     setForm({
       name: row.name,
-      unit: row.unit || "PIECES",
-      quantity: String(row.quantity ?? ""),
-      purchaseAmount: String(row.purchaseAmount ?? ""),
-      saleAmount: String(row.saleAmount ?? ""),
       status: row.status ? "ACTIVE" : "INACTIVE",
       brandIds: row.brands?.map((b) => b.id) || [],
       colorIds: row.colors?.map((c) => c.id) || [],
@@ -204,10 +181,6 @@ export const CategoryMaster = () => {
 
   type CategoryPayload = {
     name: string;
-    unit: UnitType;
-    quantity: number;
-    purchaseAmount: number;
-    saleAmount: number;
     status: boolean;
     brands?: string[];
     colors?: string[];
@@ -239,10 +212,6 @@ export const CategoryMaster = () => {
 
       const payload: CategoryPayload = {
         name: form.name,
-        unit: form.unit,
-        quantity: Number(form.quantity) || 0,
-        purchaseAmount: Number(form.purchaseAmount) || 0,
-        saleAmount: Number(form.saleAmount) || 0,
         status: form.status === "ACTIVE",
       };
 
@@ -348,36 +317,6 @@ export const CategoryMaster = () => {
       width: "160px",
       cell: (row) =>
         row.sizes?.length ? row.sizes.map((s) => s.name).join(", ") : "—",
-    },
-    {
-      key: "unit",
-      header: "Unit",
-      width: "100px",
-      cell: (row) => row.unit || "PIECES",
-    },
-    {
-      key: "quantity",
-      header: "Quantity",
-      width: "100px",
-      cell: (row) => row.quantity ?? "—",
-    },
-    {
-      key: "purchaseAmount",
-      header: "Purchase Amount",
-      width: "140px",
-      cell: (row) => (row.purchaseAmount ? `₹${row.purchaseAmount}` : "—"),
-    },
-    {
-      key: "totalPurchaseAmount",
-      header: "Total Purchase Amount",
-      width: "170px",
-      cell: (row) => `₹${row.totalPurchaseAmount ?? 0}`,
-    },
-    {
-      key: "saleAmount",
-      header: "Sale Amount",
-      width: "140px",
-      cell: (row) => (row.saleAmount ? `₹${row.saleAmount}` : "—"),
     },
     {
       key: "status",
@@ -522,52 +461,6 @@ export const CategoryMaster = () => {
           </datalist>
 
           <div className="grid grid-cols-2 gap-4">
-            <FormField label="Unit" required>
-              <Select
-                required
-                value={form.unit}
-                onChange={(e) =>
-                  setForm({ ...form, unit: e.target.value as UnitType })
-                }
-              >
-                {unitOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </Select>
-            </FormField>
-            <FormField label="Quantity">
-              <Input
-                type="number"
-                value={form.quantity}
-                onChange={(e) => setForm({ ...form, quantity: e.target.value })}
-              />
-            </FormField>
-            <FormField label="Purchase Amount">
-              <Input
-                type="number"
-                value={form.purchaseAmount}
-                onChange={(e) =>
-                  setForm({ ...form, purchaseAmount: e.target.value })
-                }
-              />
-            </FormField>
-            <FormField label="Total Purchase Amount">
-              <Input
-                value={`₹${totalPurchaseAmount.toLocaleString("en-IN")}`}
-                readOnly
-              />
-            </FormField>
-            <FormField label="Sale Amount">
-              <Input
-                type="number"
-                value={form.saleAmount}
-                onChange={(e) =>
-                  setForm({ ...form, saleAmount: e.target.value })
-                }
-              />
-            </FormField>
             <FormField label="Status">
               <Select
                 value={form.status}

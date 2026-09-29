@@ -11,6 +11,7 @@ import {
 } from "../../components/table";
 import { productApi } from "../../services/product.api";
 import type { Product } from "../../types/product.types";
+import type { ApiError } from "../../types/auth.types";
 import type { Brand, Category, Color, Size } from "../../types/product.types";
 
 type FormState = {
@@ -22,6 +23,7 @@ type FormState = {
   sizeIds: number[];
   gst: string;
   purchasePrice: string;
+  saleAmount: string;
   quantity: string;
   unit: "PIECES" | "DOZEN";
   status: boolean;
@@ -36,12 +38,14 @@ const emptyForm: FormState = {
   sizeIds: [],
   gst: "",
   purchasePrice: "",
+  saleAmount: "",
   quantity: "",
   unit: "PIECES",
   status: true,
 };
 
-const PRODUCT_CODE_REGEX = /^[A-Za-z]{3,}_[0-9]{5,}$/;
+const PRODUCT_CODE_REGEX = /^sqr_[0-9]{5,}$/;
+const PRODUCT_CODE_PARTIAL_REGEX = /^sqr_[0-9]+$/;
 
 const unitOptions = [
   { value: "PIECES", label: "Pieces" },
@@ -63,6 +67,7 @@ export const Products = () => {
   const [refreshingMasters, setRefreshingMasters] = useState(false);
 
   const [items, setItems] = useState<Product[]>([]);
+  const [nextProductCode, setNextProductCode] = useState("sqr_00001");
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(5);
@@ -109,6 +114,7 @@ export const Products = () => {
         if (!cancelled) {
           setItems(data.products);
           setTotal(data.total ?? data.products.length);
+          if (data.nextProductCode) setNextProductCode(data.nextProductCode);
         }
       } catch (err) {
         if (!cancelled)
@@ -145,8 +151,8 @@ export const Products = () => {
     return () => window.removeEventListener("focus", handleFocus);
   }, [toast]);
 
-  const resetForm = () => {
-    setForm(emptyForm);
+  const resetForm = (suggestedCode?: string) => {
+    setForm({ ...emptyForm, productCode: suggestedCode ?? "" });
     setEditing(null);
     setImageFile(null);
     setImagePreview("");
@@ -161,7 +167,7 @@ export const Products = () => {
     }
     if (!PRODUCT_CODE_REGEX.test(code)) {
       setProductCodeError(
-        "Format must be like abc_00001 (3+ letters, underscore, 5+ numbers)",
+        "Format must be sqr_00001 (prefix 'sqr_' + at least 5 digits)",
       );
       return false;
     }
@@ -179,8 +185,24 @@ export const Products = () => {
   };
 
   const handleProductCodeChange = (value: string) => {
-    setForm((f) => ({ ...f, productCode: value }));
-    validateProductCode(value, editing?.id);
+    const normalized = value.trim().toLowerCase();
+    setForm((f) => ({ ...f, productCode: normalized }));
+    validateProductCode(normalized, editing?.id);
+  };
+
+  const autoPadProductCode = (value: string) => {
+    const normalized = value.trim().toLowerCase();
+    if (!PRODUCT_CODE_PARTIAL_REGEX.test(normalized)) return normalized;
+    const numberPart = normalized.slice("sqr_".length);
+    return `sqr_${numberPart.padStart(5, "0")}`;
+  };
+
+  const handleProductCodeBlur = () => {
+    const padded = autoPadProductCode(form.productCode);
+    if (padded !== form.productCode) {
+      setForm((f) => ({ ...f, productCode: padded }));
+    }
+    validateProductCode(padded, editing?.id);
   };
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -197,7 +219,7 @@ export const Products = () => {
   };
 
   const openCreate = () => {
-    resetForm();
+    resetForm(nextProductCode);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -212,6 +234,7 @@ export const Products = () => {
       sizeIds: row.sizeIds,
       gst: row.gst,
       purchasePrice: String(row.purchasePrice ?? ""),
+      saleAmount: String(row.saleAmount ?? ""),
       quantity: String(row.quantity ?? ""),
       unit: row.unit || "PIECES",
       status: row.status,
@@ -246,8 +269,9 @@ export const Products = () => {
       form.brandIds.forEach((id) => fd.append("brandIds", String(id)));
       form.colorIds.forEach((id) => fd.append("colorIds", String(id)));
       form.sizeIds.forEach((id) => fd.append("sizeIds", String(id)));
-      fd.append("gst", form.gst);
+      fd.append("gst", form.gst || "");
       if (form.purchasePrice) fd.append("purchasePrice", form.purchasePrice);
+      fd.append("saleAmount", form.saleAmount || "");
       if (form.quantity) fd.append("quantity", form.quantity);
       fd.append("unit", form.unit);
       fd.append("status", String(form.status));
@@ -255,6 +279,7 @@ export const Products = () => {
         fd.append("productImage", imageFile);
       }
 
+      let createdNextCode = nextProductCode;
       if (editing) {
         const { product } = await productApi.products.update(editing.id, fd);
         setItems((current) =>
@@ -262,17 +287,26 @@ export const Products = () => {
         );
         toast({ title: "Product updated", variant: "success" });
       } else {
-        const { product } = await productApi.products.create(fd);
+        const { product, nextProductCode: suggestedNextCode } =
+          await productApi.products.create(fd);
         setItems((current) => [product, ...current]);
         setTotal((current) => current + 1);
         setPage(1);
+        if (suggestedNextCode) {
+          createdNextCode = suggestedNextCode;
+          setNextProductCode(suggestedNextCode);
+        }
         toast({ title: "Product created", variant: "success" });
       }
-      resetForm();
+      resetForm(editing ? undefined : createdNextCode || "sqr_00001");
     } catch (err) {
+      const apiError = err as ApiError;
+      const fields = apiError?.details?.fields?.length
+        ? ` (${apiError.details.fields.join(", ")})`
+        : "";
       toast({
         title: editing ? "Update failed" : "Creation failed",
-        description: (err as Error).message,
+        description: `${apiError?.message || "Unexpected error"}${fields}`,
         variant: "error",
       });
     }
@@ -390,6 +424,12 @@ export const Products = () => {
       cell: (row) => `₹${row.purchasePrice ?? "—"}`,
     },
     {
+      key: "saleAmount",
+      header: "Sale Amount",
+      width: "120px",
+      cell: (row) => `₹${row.saleAmount ?? "—"}`,
+    },
+    {
       key: "totalPurchaseAmount",
       header: "Total Purchase Amount",
       width: "160px",
@@ -457,12 +497,22 @@ export const Products = () => {
       <Card className="mb-6 p-6">
         <form id="product-form" onSubmit={submit} className="space-y-5">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <FormField label="Product Code" required error={productCodeError}>
+            <FormField
+              label="Product Code"
+              required
+              error={productCodeError}
+              hint={
+                editing
+                  ? "Format: sqr_00001"
+                  : `Example: sqr_00001 • Suggested next code: ${nextProductCode}`
+              }
+            >
               <Input
                 required
                 value={form.productCode}
                 onChange={(e) => handleProductCodeChange(e.target.value)}
-                placeholder="e.g. ABC_00001"
+                onBlur={handleProductCodeBlur}
+                placeholder="e.g. sqr_00001"
               />
             </FormField>
             <FormField label="Product Name" required>
@@ -488,24 +538,12 @@ export const Products = () => {
                 value={form.categoryId}
                 onChange={(e) => {
                   const categoryId = e.target.value;
-                  const category = categories.find(
-                    (c) => c.id === Number(categoryId),
-                  );
                   setForm({
                     ...form,
                     categoryId,
                     brandIds: [],
                     colorIds: [],
                     sizeIds: [],
-                    purchasePrice:
-                      category?.purchaseAmount != null
-                        ? String(category.purchaseAmount)
-                        : "",
-                    quantity:
-                      category?.quantity != null
-                        ? String(category.quantity)
-                        : "",
-                    unit: category?.unit || "PIECES",
                   });
                 }}
               >
@@ -571,12 +609,6 @@ export const Products = () => {
                 placeholder="0"
               />
             </FormField>
-            <FormField label="Total Purchase Amount">
-              <Input
-                value={`₹${totalPurchaseAmount.toLocaleString("en-IN")}`}
-                readOnly
-              />
-            </FormField>
             <FormField label="Unit">
               <Select
                 value={form.unit}
@@ -593,6 +625,22 @@ export const Products = () => {
                   </option>
                 ))}
               </Select>
+            </FormField>
+            <FormField label="Total Purchase Amount">
+              <Input
+                value={`₹${totalPurchaseAmount.toLocaleString("en-IN")}`}
+                readOnly
+              />
+            </FormField>
+            <FormField label="Sale Amount">
+              <Input
+                type="number"
+                value={form.saleAmount}
+                onChange={(e) =>
+                  setForm({ ...form, saleAmount: e.target.value })
+                }
+                placeholder="0.00"
+              />
             </FormField>
           </div>
 
@@ -637,7 +685,7 @@ export const Products = () => {
           </div>
 
           <div className="flex justify-end gap-3">
-            <Button type="button" variant="outline" onClick={resetForm}>
+            <Button type="button" variant="outline" onClick={() => resetForm()}>
               Reset
             </Button>
             <Button type="submit" loading={loading}>
@@ -726,6 +774,8 @@ export const Products = () => {
             <span>{viewing.gst || "—"}</span>
             <span>Purchase Price</span>
             <span>₹{viewing.purchasePrice ?? "—"}</span>
+            <span>Sale Amount</span>
+            <span>₹{viewing.saleAmount ?? "—"}</span>
             <span>Total Purchase Amount</span>
             <span>₹{viewing.totalPurchaseAmount ?? 0}</span>
             <span>Quantity</span>

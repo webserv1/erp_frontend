@@ -54,11 +54,6 @@ export interface Category {
   type: "CATEGORY";
   name: string;
   categoryId: null;
-  unit: "PIECES" | "DOZEN";
-  quantity: number;
-  purchaseAmount: number;
-  totalPurchaseAmount: number;
-  saleAmount: number;
   status: boolean;
   createdAt: string;
   updatedAt: string;
@@ -82,6 +77,7 @@ export interface Product {
   productImage?: string;
   gst: string;
   purchasePrice: string | number;
+  saleAmount?: string | number;
   totalPurchaseAmount: number;
   quantity: number;
   unit: "PIECES" | "DOZEN";
@@ -97,6 +93,7 @@ export interface Product {
 
 export interface ProductListResponse {
   products: Product[];
+  nextProductCode?: string;
   total?: number;
   page?: number;
   limit?: number;
@@ -105,6 +102,7 @@ export interface ProductListResponse {
 export interface ProductCreateResponse {
   message: string;
   product: Product;
+  nextProductCode?: string;
 }
 
 export interface ProductUpdateResponse {

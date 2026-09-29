@@ -45,14 +45,15 @@ export const productApi = {
       return request<ProductListResponse>(`/products${qs ? `?${qs}` : ''}`)
     },
     get: (id: number) => request<{ product: Product }>(`/products/${id}`).then((res) => res.product),
+    nextCode: () => request<{ nextProductCode: string }>('/products/next-code'),
     create: (formData: FormData) => request<ProductCreateResponse>('/products', { method: 'POST', body: formData }),
     update: (id: number, formData: FormData) => request<ProductUpdateResponse>(`/products/${id}`, { method: 'PUT', body: formData }),
     remove: (id: number) => request<{ message: string }>(`/products/${id}`, { method: 'DELETE' }),
   },
   categories: {
     list: () => request<{ categories: Category[] }>('/product-masters/category').then((res) => res.categories),
-    create: (payload: { name: string; unit: 'PIECES' | 'DOZEN'; quantity: number; purchaseAmount: number; saleAmount: number; status: boolean; brands?: string[]; colors?: string[]; sizes?: string[]; brandIds?: number[]; colorIds?: number[]; sizeIds?: number[] }) => request<{ message: string; category: Category }>('/product-masters/category', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }),
-    update: (id: number, payload: { name: string; unit: 'PIECES' | 'DOZEN'; quantity: number; purchaseAmount: number; saleAmount: number; status: boolean; brands?: string[]; colors?: string[]; sizes?: string[]; brandIds?: number[]; colorIds?: number[]; sizeIds?: number[] }) => request<{ message: string; category: Category }>(`/product-masters/category/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }),
+    create: (payload: { name: string; status: boolean; brands?: string[]; colors?: string[]; sizes?: string[]; brandIds?: number[]; colorIds?: number[]; sizeIds?: number[] }) => request<{ message: string; category: Category }>('/product-masters/category', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }),
+    update: (id: number, payload: { name: string; status: boolean; brands?: string[]; colors?: string[]; sizes?: string[]; brandIds?: number[]; colorIds?: number[]; sizeIds?: number[] }) => request<{ message: string; category: Category }>(`/product-masters/category/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }),
     remove: (id: number) => request<{ message: string }>(`/product-masters/category/${id}`, { method: 'DELETE' }),
   },
   brands: masterApi<Brand>('/product-masters/brands'),
