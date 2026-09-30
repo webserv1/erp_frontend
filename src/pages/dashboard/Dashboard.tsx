@@ -19,7 +19,6 @@ import {
 import { useToast } from "../../components/ui";
 import { useAuth } from "../../hooks/useAuth";
 import { dashboardApi, type DashboardData } from "../../services/dashboard.api";
-import { expenseApi } from "../../services/expense.api";
 
 const currency = new Intl.NumberFormat("en-IN", {
   style: "currency",
@@ -32,7 +31,6 @@ export const Dashboard = () => {
   const { toast } = useToast();
   const welcomed = useRef(false);
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
-  const [expenses, setExpenses] = useState(0);
   const [loading, setLoading] = useState(true);
   const isAdmin = user?.role.name === "ADMIN";
   const isSqarsGarments =
@@ -43,35 +41,37 @@ export const Dashboard = () => {
     let cancelled = false;
 
     const load = async () => {
-      const [dashboardResult, expenseResult] = await Promise.allSettled([
-        dashboardApi.get(),
-        isAdmin ? expenseApi.getSummary() : Promise.resolve(null),
-      ]);
+      const dashboardResult = await dashboardApi.get();
 
       if (cancelled) return;
 
-      if (dashboardResult.status === "fulfilled") {
-        setDashboard(dashboardResult.value);
-      } else {
+      try {
+        setDashboard(dashboardResult);
+      } catch (error) {
         toast({
           title: "Failed to load dashboard",
-          description: (dashboardResult.reason as Error).message,
+          description: (error as Error).message,
           variant: "error",
         });
-      }
-
-      if (expenseResult.status === "fulfilled" && expenseResult.value) {
-        setExpenses(expenseResult.value.thisMonthTotal);
       }
 
       setLoading(false);
     };
 
-    void load();
+    load().catch((error) => {
+      if (!cancelled) {
+        toast({
+          title: "Failed to load dashboard",
+          description: (error as Error).message,
+          variant: "error",
+        });
+        setLoading(false);
+      }
+    });
     return () => {
       cancelled = true;
     };
-  }, [isAdmin, toast]);
+  }, [toast]);
 
   useEffect(() => {
     if (!user || welcomed.current) return;
@@ -117,7 +117,52 @@ export const Dashboard = () => {
     {
       label: "ThisMonthExpenses",
       icon: Wallet,
-      value: value(currency.format(expenses)),
+      value: value(currency.format(dashboard?.expenses.thisMonthTotal ?? 0)),
+      breakdown:
+        isSqarsGarments && !loading
+          ? [
+              {
+                initials: "SQ",
+                percentage: 50,
+                amount: currency.format(
+                  (dashboard?.expenses.thisMonthTotal ?? 0) * 0.5,
+                ),
+              },
+              {
+                initials: "ARS",
+                percentage: 50,
+                amount: currency.format(
+                  (dashboard?.expenses.thisMonthTotal ?? 0) * 0.5,
+                ),
+              },
+            ]
+          : undefined,
+      accent: "secondary" as const,
+      adminOnly: true,
+    },
+    {
+      label: "OverallExpenses",
+      icon: Wallet,
+      value: value(currency.format(dashboard?.expenses.overallTotal ?? 0)),
+      breakdown:
+        isSqarsGarments && !loading
+          ? [
+              {
+                initials: "SQ",
+                percentage: 50,
+                amount: currency.format(
+                  (dashboard?.expenses.overallTotal ?? 0) * 0.5,
+                ),
+              },
+              {
+                initials: "ARS",
+                percentage: 50,
+                amount: currency.format(
+                  (dashboard?.expenses.overallTotal ?? 0) * 0.5,
+                ),
+              },
+            ]
+          : undefined,
       accent: "secondary" as const,
       adminOnly: true,
     },

@@ -71,6 +71,10 @@ export interface DashboardData {
   totalSales: number;
   totalSalesProfit: number;
   today: TodayData;
+  expenses: {
+    thisMonthTotal: number;
+    overallTotal: number;
+  };
   lowStockAlerts: LowStockAlert[];
   balances: BalanceSummary;
   overduePartyReminders: OverduePartyReminder[];
@@ -99,6 +103,10 @@ export const dashboardApi = {
           saleCount: dashboard.today?.saleCount ?? 0,
           saleTotal: dashboard.today?.saleTotal ?? 0,
           salesProfit: dashboard.today?.salesProfit ?? 0,
+        },
+        expenses: {
+          thisMonthTotal: dashboard.expenses?.thisMonthTotal ?? 0,
+          overallTotal: dashboard.expenses?.overallTotal ?? 0,
         },
         lowStockAlerts: Array.isArray(dashboard.lowStockAlerts)
           ? dashboard.lowStockAlerts
