@@ -215,6 +215,7 @@ export interface Sale {
   productCode: string;
   partyId: number;
   partyName: string;
+  shopName?: string | null;
   supplierId?: number;
   supplierName?: string;
   brandId?: number;
@@ -249,7 +250,7 @@ export interface Sale {
   colors: { id: number; name: string }[];
   sizes: { id: number; name: string }[];
   supplier?: { id: number; name: string };
-  party?: { id: number; partyName: string };
+  party?: { id: number; partyName: string; shopName?: string };
   items: {
     id: number;
     productId?: number;

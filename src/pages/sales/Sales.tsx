@@ -320,7 +320,7 @@ export const Sales = () => {
     setForm({
       saleNumber: sale.saleNumber || "",
       partyId: sale.partyId ? String(sale.partyId) : "",
-      partyName: sale.partyName || "",
+      partyName: sale.partyName || sale.party?.partyName || "",
       paidAmount: String(sale.paidAmount || 0),
       discount: String(sale.discount || 0),
       paymentStatus: sale.paymentStatus,
@@ -335,7 +335,7 @@ export const Sales = () => {
     event.preventDefault();
 
     if (!form.partyId) {
-      toast({ title: "Please select a party", variant: "error" });
+      toast({ title: "Please select a shop name", variant: "error" });
       return;
     }
 
@@ -477,6 +477,11 @@ export const Sales = () => {
       key: "partyName",
       header: "Party Name",
       cell: (sale) => sale.partyName || sale.party?.partyName || "-",
+    },
+    {
+      key: "shopName",
+      header: "Shop Name",
+      cell: (sale) => sale.shopName || sale.party?.shopName || "-",
     },
     {
       key: "brand",
@@ -644,7 +649,7 @@ export const Sales = () => {
                 value={form.saleNumber || "Auto-generated on submit"}
               />
             </FormField>
-            <FormField label="Party" required>
+            <FormField label="Shop Name" required>
               <Select
                 required
                 value={form.partyId}
@@ -659,13 +664,16 @@ export const Sales = () => {
                   }));
                 }}
               >
-                <option value="">Select party</option>
+                <option value="">Select shop name</option>
                 {parties.map((party) => (
                   <option key={party.id} value={party.id}>
-                    {party.partyName}
+                    {party.shopName} ({party.partyName})
                   </option>
                 ))}
               </Select>
+            </FormField>
+            <FormField label="Party Name">
+              <Input readOnly value={form.partyName || ""} />
             </FormField>
             <FormField label="Paid Amount" required>
               <Input
@@ -1014,6 +1022,14 @@ export const Sales = () => {
                   </td>
                   <td className="px-4 py-2 text-secondary">
                     {viewing.partyName || viewing.party?.partyName || "—"}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-2 font-semibold text-text-secondary">
+                    Shop Name
+                  </td>
+                  <td className="px-4 py-2 text-secondary">
+                    {viewing.shopName || viewing.party?.shopName || "—"}
                   </td>
                 </tr>
                 <tr>

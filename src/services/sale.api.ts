@@ -186,6 +186,8 @@ const normalizeSale = (entry: Sale): Sale => {
   return {
     ...entry,
     invoiceNumber: entry.invoiceNumber || entry.saleNumber,
+    partyName: entry.partyName || entry.party?.partyName || "",
+    shopName: entry.shopName || entry.party?.shopName,
     productCode: normalizedItems[0]?.productCode || entry.productCode,
     productName: normalizedItems[0]?.productName || entry.productName,
     quantity: numberOrZero(entry.quantity || normalizedItems[0]?.quantity),
