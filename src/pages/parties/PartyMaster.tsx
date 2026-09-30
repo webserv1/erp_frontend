@@ -185,6 +185,18 @@ export const PartyMaster = () => {
     { key: "city", header: "City" },
     { key: "state", header: "State" },
     {
+      key: "totalPurchase",
+      header: "Total Purchase",
+      width: "150px",
+      cell: (row) => `₹${row.totalPurchase ?? 0}`,
+    },
+    {
+      key: "remainingBalance",
+      header: "Remaining Balance",
+      width: "170px",
+      cell: (row) => `₹${row.remainingBalance ?? 0}`,
+    },
+    {
       key: "sales_profit",
       header: "Party Profit",
       width: "140px",
@@ -439,6 +451,22 @@ export const PartyMaster = () => {
                   </td>
                   <td className="px-4 py-2 text-secondary">
                     {viewing.address}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-2 font-semibold text-text-secondary">
+                    Total Purchase
+                  </td>
+                  <td className="px-4 py-2 text-secondary">
+                    ₹{viewing.totalPurchase ?? 0}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-2 font-semibold text-text-secondary">
+                    Remaining Balance
+                  </td>
+                  <td className="px-4 py-2 text-secondary">
+                    ₹{viewing.remainingBalance ?? 0}
                   </td>
                 </tr>
                 <tr>

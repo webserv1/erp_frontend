@@ -123,6 +123,8 @@ export interface Party {
   country: string;
   pincode: string;
   sales_profit: number;
+  totalPurchase?: number;
+  remainingBalance?: number;
   status: boolean;
   createdAt: string;
   updatedAt: string;
