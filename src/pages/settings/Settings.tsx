@@ -84,6 +84,7 @@ export const Settings = () => {
   const [editingUserId, setEditingUserId] = useState<number | null>(null)
   const [deletingUserId, setDeletingUserId] = useState<number | null>(null)
   const [pendingDeleteProfile, setPendingDeleteProfile] = useState<ProfileUser | null>(null)
+  const [pendingDeleteAsset, setPendingDeleteAsset] = useState<'logo' | 'background' | 'favicon' | null>(null)
   const [profileError, setProfileError] = useState('')
   const [profileForm, setProfileForm] = useState({
     name: '',
@@ -285,6 +286,12 @@ export const Settings = () => {
     } catch (err) {
       toast({ title: 'Delete failed', description: (err as Error).message, variant: 'error' })
     }
+  }
+
+  const confirmDeleteAsset = async () => {
+    if (!pendingDeleteAsset) return
+    await handleDeleteAsset(pendingDeleteAsset)
+    setPendingDeleteAsset(null)
   }
 
   const handleFileChange = (type: 'logo' | 'background' | 'favicon') => (e: ChangeEvent<HTMLInputElement>) => {
@@ -1089,7 +1096,7 @@ export const Settings = () => {
                     <input type="file" accept="image/*" onChange={handleFileChange(asset as 'logo' | 'background' | 'favicon')} className="hidden" />
                   </label>
                   {existingUrl && (
-                    <Button type="button" variant="danger" size="icon" onClick={() => handleDeleteAsset(asset as 'logo' | 'background' | 'favicon')} className="h-8 w-8 p-1.5">
+                    <Button type="button" variant="danger" size="icon" onClick={() => setPendingDeleteAsset(asset as 'logo' | 'background' | 'favicon')} className="h-8 w-8 p-1.5">
                       <Trash2 size={14} />
                     </Button>
                   )}
@@ -1100,6 +1107,28 @@ export const Settings = () => {
           })}
         </div>
       </Card>
+      <Modal
+        open={Boolean(pendingDeleteAsset)}
+        onClose={() => setPendingDeleteAsset(null)}
+        title="Delete Asset"
+        footer={
+          <>
+            <Button type="button" variant="outline" onClick={() => setPendingDeleteAsset(null)}>
+              Cancel
+            </Button>
+            <Button type="button" variant="danger" onClick={() => void confirmDeleteAsset()}>
+              Delete
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-3">
+          <p className="text-sm text-secondary">
+            Are you sure you want to delete this {pendingDeleteAsset || 'asset'}?
+          </p>
+          <p className="text-xs text-text-secondary">This action cannot be undone.</p>
+        </div>
+      </Modal>
     </div>
   )
 

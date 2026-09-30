@@ -98,6 +98,7 @@ export const CategoryMaster = () => {
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
+  const [pendingDeleteCategory, setPendingDeleteCategory] = useState<Category | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [newMasterDrafts, setNewMasterDrafts] = useState(emptyNewMasterDrafts);
   const { toast } = useToast();
@@ -275,6 +276,12 @@ export const CategoryMaster = () => {
     }
   };
 
+  const confirmDelete = async () => {
+    if (!pendingDeleteCategory) return;
+    await remove(pendingDeleteCategory);
+    setPendingDeleteCategory(null);
+  };
+
   const addNewItem = (type: NewMasterField) => {
     const name = newMasterDrafts[type].trim();
     if (!name) return;
@@ -336,7 +343,7 @@ export const CategoryMaster = () => {
     { label: "Edit", onClick: openEdit },
     {
       label: "Delete",
-      onClick: remove,
+      onClick: setPendingDeleteCategory,
       className: "text-red-600 hover:bg-red-50",
     },
   ];
@@ -512,6 +519,27 @@ export const CategoryMaster = () => {
             {renderNewItems("newSizes", "New Sizes", form.newSizes)}
           </div>
         </form>
+      </Modal>
+
+      <Modal
+        open={!!pendingDeleteCategory}
+        onClose={() => setPendingDeleteCategory(null)}
+        title="Delete Category"
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setPendingDeleteCategory(null)}>
+              Cancel
+            </Button>
+            <Button variant="danger" onClick={confirmDelete}>
+              Delete
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-text-secondary">
+          Are you sure you want to delete category{" "}
+          <span className="font-semibold">{pendingDeleteCategory?.name}</span>?
+        </p>
       </Modal>
     </>
   );

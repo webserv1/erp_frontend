@@ -49,6 +49,7 @@ export const SupplierMaster = () => {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [editing, setEditing] = useState<Supplier | null>(null);
   const [viewing, setViewing] = useState<Supplier | null>(null);
+  const [pendingDeleteSupplier, setPendingDeleteSupplier] = useState<Supplier | null>(null);
 
   const [items, setItems] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
@@ -178,6 +179,12 @@ export const SupplierMaster = () => {
     }
   };
 
+  const confirmDelete = async () => {
+    if (!pendingDeleteSupplier) return;
+    await remove(pendingDeleteSupplier);
+    setPendingDeleteSupplier(null);
+  };
+
   const totalPages = Math.max(1, Math.ceil(total / limit));
   const paginatedItems = items.slice((page - 1) * limit, page * limit);
 
@@ -211,7 +218,7 @@ export const SupplierMaster = () => {
     { label: <Pencil size={16} />, onClick: openEdit, title: "Edit" },
     {
       label: <Trash2 size={16} />,
-      onClick: remove,
+      onClick: setPendingDeleteSupplier,
       className: "text-red-600 hover:bg-red-50",
       title: "Delete",
     },
@@ -495,6 +502,27 @@ export const SupplierMaster = () => {
             </table>
           </div>
         )}
+      </Modal>
+
+      <Modal
+        open={!!pendingDeleteSupplier}
+        onClose={() => setPendingDeleteSupplier(null)}
+        title="Delete Supplier"
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setPendingDeleteSupplier(null)}>
+              Cancel
+            </Button>
+            <Button variant="danger" onClick={confirmDelete}>
+              Delete
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-text-secondary">
+          Are you sure you want to delete{" "}
+          <span className="font-semibold">{pendingDeleteSupplier?.name}</span>?
+        </p>
       </Modal>
     </>
   );

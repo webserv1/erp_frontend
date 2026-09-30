@@ -64,6 +64,7 @@ export const PurchaseMaster = () => {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [editing, setEditing] = useState<Purchase | null>(null);
   const [viewing, setViewing] = useState<Purchase | null>(null);
+  const [pendingDeletePurchase, setPendingDeletePurchase] = useState<Purchase | null>(null);
 
   const [items, setItems] = useState<Purchase[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -281,6 +282,12 @@ export const PurchaseMaster = () => {
     }
   };
 
+  const confirmDelete = async () => {
+    if (!pendingDeletePurchase) return;
+    await remove(pendingDeletePurchase);
+    setPendingDeletePurchase(null);
+  };
+
   const totalPages = Math.max(1, Math.ceil(total / limit));
   const paginatedItems = items.slice((page - 1) * limit, page * limit);
 
@@ -391,7 +398,7 @@ export const PurchaseMaster = () => {
     { label: <Pencil size={16} />, onClick: openEdit, title: "Edit" },
     {
       label: <Trash2 size={16} />,
-      onClick: remove,
+      onClick: setPendingDeletePurchase,
       className: "text-red-600 hover:bg-red-50",
       title: "Delete",
     },
@@ -863,6 +870,27 @@ export const PurchaseMaster = () => {
             </table>
           </div>
         )}
+      </Modal>
+
+      <Modal
+        open={!!pendingDeletePurchase}
+        onClose={() => setPendingDeletePurchase(null)}
+        title="Delete Purchase"
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setPendingDeletePurchase(null)}>
+              Cancel
+            </Button>
+            <Button variant="danger" onClick={confirmDelete}>
+              Delete
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-text-secondary">
+          Are you sure you want to delete purchase{" "}
+          <span className="font-semibold">{pendingDeletePurchase?.purchaseNumber}</span>?
+        </p>
       </Modal>
     </>
   );

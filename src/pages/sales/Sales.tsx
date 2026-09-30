@@ -152,6 +152,7 @@ export const Sales = () => {
   const [form, setForm] = useState<Form>(empty);
   const [editing, setEditing] = useState<Sale | null>(null);
   const [viewing, setViewing] = useState<Sale | null>(null);
+  const [pendingDeleteSale, setPendingDeleteSale] = useState<Sale | null>(null);
   const [invoice, setInvoice] = useState<Awaited<
     ReturnType<typeof saleApi.invoice>
   > | null>(null);
@@ -447,6 +448,25 @@ export const Sales = () => {
     }
   };
 
+  const remove = async (sale: Sale) => {
+    await saleApi.remove(sale.id);
+    setItems((current) => current.filter((item) => item.id !== sale.id));
+  };
+
+  const confirmDelete = async () => {
+    if (!pendingDeleteSale) return;
+    try {
+      await remove(pendingDeleteSale);
+      setPendingDeleteSale(null);
+    } catch (error) {
+      toast({
+        title: "Delete failed",
+        description: (error as Error).message,
+        variant: "error",
+      });
+    }
+  };
+
   const columns: DataTableColumn<Sale>[] = [
     {
       key: "invoiceNumber",
@@ -601,10 +621,7 @@ export const Sales = () => {
     { label: <Pencil size={16} />, onClick: edit, title: "Edit" },
     {
       label: <Trash2 size={16} />,
-      onClick: async (sale) => {
-        await saleApi.remove(sale.id);
-        setItems((current) => current.filter((item) => item.id !== sale.id));
-      },
+      onClick: setPendingDeleteSale,
       title: "Delete",
       className: "text-red-600 hover:bg-red-50",
     },
@@ -1150,6 +1167,30 @@ export const Sales = () => {
             })()}
           </div>
         )}
+      </Modal>
+
+      <Modal
+        open={!!pendingDeleteSale}
+        onClose={() => setPendingDeleteSale(null)}
+        title="Delete Sale"
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setPendingDeleteSale(null)}>
+              Cancel
+            </Button>
+            <Button variant="danger" onClick={() => void confirmDelete()}>
+              Delete
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-text-secondary">
+          Are you sure you want to delete invoice{" "}
+          <span className="font-semibold">
+            {pendingDeleteSale?.invoiceNumber || pendingDeleteSale?.saleNumber}
+          </span>
+          ?
+        </p>
       </Modal>
 
       <SaleInvoiceModal invoice={invoice} onClose={() => setInvoice(null)} />

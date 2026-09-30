@@ -75,7 +75,7 @@ export const AppSidebar = ({ open, onClose }: { open: boolean; onClose: () => vo
       <div className="flex h-18 shrink-0 items-center justify-between border-b border-white/10 px-5">
         <div className="flex items-center gap-3">
           <div className="grid size-9 place-items-center rounded-lg bg-primary text-secondary"><Building2 size={20} /></div>
-          <div><p className="font-bold">A-ERP</p><p className="text-xs text-white/60">Operations suite</p></div>
+          <div><p className="font-bold">SQARS-ERP</p><p className="text-xs text-white/60">Operations suite</p></div>
         </div>
         <button onClick={onClose} className="lg:hidden"><X /></button>
       </div>

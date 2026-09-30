@@ -72,6 +72,7 @@ export const ExpenseMaster = () => {
   const [form, setForm] = useState<FormState>(createEmptyForm);
   const [editing, setEditing] = useState<Expense | null>(null);
   const [viewing, setViewing] = useState<Expense | null>(null);
+  const [pendingDeleteExpense, setPendingDeleteExpense] = useState<Expense | null>(null);
 
   const [items, setItems] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
@@ -302,6 +303,12 @@ export const ExpenseMaster = () => {
     }
   };
 
+  const confirmDelete = async () => {
+    if (!pendingDeleteExpense) return;
+    await remove(pendingDeleteExpense);
+    setPendingDeleteExpense(null);
+  };
+
   const totalPages = Math.max(1, Math.ceil(total / limit));
   const paginatedItems = items.slice((page - 1) * limit, page * limit);
 
@@ -350,7 +357,7 @@ export const ExpenseMaster = () => {
     { label: <Pencil size={16} />, onClick: openEdit, title: "Edit" },
     {
       label: <Trash2 size={16} />,
-      onClick: remove,
+      onClick: setPendingDeleteExpense,
       className: "text-red-600 hover:bg-red-50",
       title: "Delete",
     },
@@ -801,6 +808,26 @@ export const ExpenseMaster = () => {
             </table>
           </div>
         )}
+      </Modal>
+
+      <Modal
+        open={!!pendingDeleteExpense}
+        onClose={() => setPendingDeleteExpense(null)}
+        title="Delete Expense"
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setPendingDeleteExpense(null)}>
+              Cancel
+            </Button>
+            <Button variant="danger" onClick={confirmDelete}>
+              Delete
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-text-secondary">
+          Are you sure you want to delete this expense entry?
+        </p>
       </Modal>
     </>
   );

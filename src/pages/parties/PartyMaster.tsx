@@ -48,6 +48,7 @@ export const PartyMaster = () => {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [editing, setEditing] = useState<Party | null>(null);
   const [viewing, setViewing] = useState<Party | null>(null);
+  const [pendingDeleteParty, setPendingDeleteParty] = useState<Party | null>(null);
 
   const [items, setItems] = useState<Party[]>([]);
   const [loading, setLoading] = useState(true);
@@ -175,6 +176,12 @@ export const PartyMaster = () => {
     }
   };
 
+  const confirmDelete = async () => {
+    if (!pendingDeleteParty) return;
+    await remove(pendingDeleteParty);
+    setPendingDeleteParty(null);
+  };
+
   const totalPages = Math.max(1, Math.ceil(total / limit));
   const paginatedItems = items.slice((page - 1) * limit, page * limit);
 
@@ -221,7 +228,7 @@ export const PartyMaster = () => {
     { label: <Pencil size={16} />, onClick: openEdit, title: "Edit" },
     {
       label: <Trash2 size={16} />,
-      onClick: remove,
+      onClick: setPendingDeleteParty,
       className: "text-red-600 hover:bg-red-50",
       title: "Delete",
     },
@@ -519,6 +526,27 @@ export const PartyMaster = () => {
             </table>
           </div>
         )}
+      </Modal>
+
+      <Modal
+        open={!!pendingDeleteParty}
+        onClose={() => setPendingDeleteParty(null)}
+        title="Delete Party"
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setPendingDeleteParty(null)}>
+              Cancel
+            </Button>
+            <Button variant="danger" onClick={confirmDelete}>
+              Delete
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-text-secondary">
+          Are you sure you want to delete{" "}
+          <span className="font-semibold">{pendingDeleteParty?.partyName}</span>?
+        </p>
       </Modal>
     </>
   );

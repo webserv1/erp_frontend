@@ -12,13 +12,13 @@ export const AuthLayout = ({ title, subtitle, children }: AuthLayoutProps) => (
     <section className="hidden flex-col justify-between bg-sidebar p-12 text-white lg:flex">
       <div className="flex items-center gap-3">
         <div className="grid size-11 place-items-center rounded-xl bg-primary text-secondary"><Building2 /></div>
-        <span className="text-xl font-bold">A-ERP</span>
+        <span className="text-xl font-bold">SQARS-ERP</span>
       </div>
       <div>
         <p className="text-4xl font-bold leading-tight">Clarity for every<br /><span className="text-primary">business decision.</span></p>
         <p className="mt-5 max-w-md text-white/65">Secure operations, thoughtfully designed for modern teams.</p>
       </div>
-      <p className="text-sm text-white/45">© {new Date().getFullYear()} A-ERP</p>
+      <p className="text-sm text-white/45">© {new Date().getFullYear()} SQARS-ERP</p>
     </section>
     <section className="flex items-center justify-center p-6">
       <div className="w-full max-w-md">

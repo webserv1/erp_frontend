@@ -60,6 +60,7 @@ export const Products = () => {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [editing, setEditing] = useState<Product | null>(null);
   const [viewing, setViewing] = useState<Product | null>(null);
+  const [pendingDeleteProduct, setPendingDeleteProduct] = useState<Product | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
 
@@ -328,6 +329,12 @@ export const Products = () => {
     }
   };
 
+  const confirmDelete = async () => {
+    if (!pendingDeleteProduct) return;
+    await remove(pendingDeleteProduct);
+    setPendingDeleteProduct(null);
+  };
+
   const toggleStatus = async (row: Product) => {
     try {
       const fd = new FormData();
@@ -468,7 +475,7 @@ export const Products = () => {
     { label: "Edit", onClick: openEdit },
     {
       label: "Delete",
-      onClick: remove,
+      onClick: setPendingDeleteProduct,
       className: "text-red-600 hover:bg-red-50",
     },
   ];
@@ -786,6 +793,27 @@ export const Products = () => {
             <span>{viewing.status ? "Active" : "Inactive"}</span>
           </div>
         )}
+      </Modal>
+
+      <Modal
+        open={!!pendingDeleteProduct}
+        onClose={() => setPendingDeleteProduct(null)}
+        title="Delete Product"
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setPendingDeleteProduct(null)}>
+              Cancel
+            </Button>
+            <Button variant="danger" onClick={confirmDelete}>
+              Delete
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-text-secondary">
+          Are you sure you want to delete product{" "}
+          <span className="font-semibold">{pendingDeleteProduct?.productCode}</span>?
+        </p>
       </Modal>
     </>
   );
