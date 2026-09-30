@@ -29,16 +29,63 @@ export const KpiCard = ({
   breakdown,
   icon: Icon,
   accent = "primary",
+  onClick,
 }: {
   label: string;
   value: string | number;
   breakdown?: { initials: string; percentage: number; amount: string }[];
   icon: LucideIcon;
   accent?: Accent;
+  onClick?: () => void;
 }) => {
   const colors = accentClasses[accent];
+  const cardClassName =
+    "premium-card flex h-[138px] w-[156px] max-w-full flex-col items-center justify-center gap-1 px-3 py-3 text-center";
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className={`${cardClassName} cursor-pointer transition-transform hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40`}
+      >
+        <span
+          className={`grid size-8 place-items-center rounded-lg ${colors.badge}`}
+        >
+          <Icon size={17} />
+        </span>
+        {breakdown ? (
+          <div className="mt-1 w-full">
+            <p className="text-sm font-bold tabular-nums text-text-primary">
+              Total {value}
+            </p>
+            <div className="mt-1 flex justify-center gap-3">
+              {breakdown.map((part) => (
+                <div key={part.initials} className="min-w-0">
+                  <p className="text-[10px] font-bold uppercase text-text-secondary">
+                    {part.initials} {part.percentage}%
+                  </p>
+                  <p className="truncate text-xs font-bold tabular-nums text-text-primary">
+                    {part.amount}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <p className="mt-1 text-xl font-bold tabular-nums text-text-primary">
+            {value}
+          </p>
+        )}
+        <p className="line-clamp-2 text-sm font-medium leading-4 text-text-secondary">
+          {label}
+        </p>
+      </button>
+    );
+  }
+
   return (
-    <article className="premium-card flex h-[138px] w-[156px] max-w-full flex-col items-center justify-center gap-1 px-3 py-3 text-center">
+    <article className={cardClassName}>
       <span
         className={`grid size-8 place-items-center rounded-lg ${colors.badge}`}
       >

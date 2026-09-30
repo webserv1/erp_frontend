@@ -16,6 +16,7 @@ import {
   InfoCard,
   KpiCard,
 } from "../../components/dashboard/DashboardCards";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "../../components/ui";
 import { useAuth } from "../../hooks/useAuth";
 import { dashboardApi, type DashboardData } from "../../services/dashboard.api";
@@ -27,6 +28,7 @@ const currency = new Intl.NumberFormat("en-IN", {
 });
 
 export const Dashboard = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
   const welcomed = useRef(false);
@@ -88,24 +90,28 @@ export const Dashboard = () => {
     highestSupplier: null,
   };
   const value = (amount: number | string) => (loading ? "..." : amount);
+  const navigateTo = (path: string) => () => navigate(path);
   const kpis = [
     {
       label: "Products",
       icon: Package,
       value: value(dashboard?.totalProducts ?? 0),
       accent: "primary" as const,
+      onClick: navigateTo("/products"),
     },
     {
       label: "Suppliers",
       icon: Store,
       value: value(dashboard?.totalSuppliers ?? 0),
       accent: "primaryDark" as const,
+      onClick: navigateTo("/suppliers"),
     },
     {
       label: "Total Parties",
       icon: Users,
       value: value(dashboard?.totalParties ?? 0),
       accent: "secondary" as const,
+      onClick: navigateTo("/parties"),
     },
     {
       label: "Total Sales",
@@ -113,6 +119,7 @@ export const Dashboard = () => {
       value: value(dashboard?.totalSales ?? 0),
       accent: "primaryDark" as const,
       adminOnly: true,
+      onClick: navigateTo("/sales"),
     },
     {
       label: "ThisMonthExpenses",
@@ -139,6 +146,7 @@ export const Dashboard = () => {
           : undefined,
       accent: "secondary" as const,
       adminOnly: true,
+      onClick: navigateTo("/expenses"),
     },
     {
       label: "OverallExpenses",
@@ -165,24 +173,28 @@ export const Dashboard = () => {
           : undefined,
       accent: "secondary" as const,
       adminOnly: true,
+      onClick: navigateTo("/expenses"),
     },
     {
       label: "Today's Purchase",
       icon: Receipt,
       value: value(dashboard?.today.purchaseCount ?? 0),
       accent: "primaryDark" as const,
+      onClick: navigateTo("/purchases"),
     },
     {
       label: "Today's Sales",
       icon: TrendingUp,
       value: value(dashboard?.today.saleCount ?? 0),
       accent: "primary" as const,
+      onClick: navigateTo("/sales"),
     },
     {
       label: "Low Stock Alert",
       icon: AlertTriangle,
       value: value(dashboard?.lowStockAlerts.length ?? 0),
       accent: "secondary" as const,
+      onClick: navigateTo("/stock"),
     },
     {
       label: "Today's Profit",
@@ -190,6 +202,7 @@ export const Dashboard = () => {
       value: value(currency.format(dashboard?.today.salesProfit ?? 0)),
       accent: "primary" as const,
       adminOnly: true,
+      onClick: navigateTo("/sales"),
     },
     {
       label: "TotalSalesProfit",
@@ -216,6 +229,7 @@ export const Dashboard = () => {
           : undefined,
       accent: "secondary" as const,
       adminOnly: true,
+      onClick: navigateTo("/sales"),
     },
   ];
 
