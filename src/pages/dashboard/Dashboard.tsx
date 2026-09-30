@@ -35,6 +35,7 @@ export const Dashboard = () => {
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const isAdmin = user?.role.name === "ADMIN";
+  const isWorker = user?.role.name === "WORKER";
   const isSqarsGarments =
     user?.company?.name.replace(/\s+/g, "").toLocaleLowerCase() ===
     "sqarsgarments";
@@ -232,6 +233,82 @@ export const Dashboard = () => {
       onClick: navigateTo("/sales"),
     },
   ];
+
+  if (isWorker) {
+    return (
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-6">
+          <h2 className="text-3xl font-bold text-secondary">Worker Overview</h2>
+          <p className="mt-1 text-sm text-text-secondary">
+            Pending party bills, invoice count, generated dates, and purchased products.
+          </p>
+        </div>
+
+        <section className="space-y-4">
+          {loading ? (
+            <div className="rounded-xl border border-border-gold bg-white p-4 text-sm text-text-secondary">
+              Loading pending party bills...
+            </div>
+          ) : (dashboard?.workerOverview?.length ?? 0) === 0 ? (
+            <div className="rounded-xl border border-border-gold bg-white p-4 text-sm text-text-secondary">
+              No pending party bills found.
+            </div>
+          ) : (
+            dashboard?.workerOverview.map((party) => (
+              <article key={`${party.partyId}-${party.partyName}`} className="rounded-xl border border-border-gold bg-white p-4 shadow-sm">
+                <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border-gold pb-3">
+                  <div>
+                    <h3 className="text-lg font-bold text-secondary">{party.partyName}</h3>
+                    <p className="text-sm text-text-secondary">
+                      Shop: {party.shopName || "—"} {party.mobile ? `• Mob: ${party.mobile}` : ""}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-text-secondary">Pending Amount</p>
+                    <p className="text-xl font-extrabold text-primary-dark">{currency.format(party.pendingAmount)}</p>
+                    <p className="mt-1 text-xs text-text-secondary">
+                      Total Invoices: <span className="font-semibold text-secondary">{party.totalInvoiceCount}</span>
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-3 overflow-x-auto">
+                  <table className="min-w-full text-left text-sm">
+                    <thead className="border-b border-border-gold text-text-secondary">
+                      <tr>
+                        <th className="px-2 py-2 font-semibold">Invoice #</th>
+                        <th className="px-2 py-2 font-semibold">Generated Date</th>
+                        <th className="px-2 py-2 font-semibold">Products Purchased</th>
+                        <th className="px-2 py-2 font-semibold text-right">Remaining</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border-gold/60">
+                      {party.invoices.map((invoice) => (
+                        <tr key={`${party.partyId}-${invoice.invoiceNumber}`}>
+                          <td className="px-2 py-2 font-medium text-secondary">{invoice.invoiceNumber}</td>
+                          <td className="px-2 py-2 text-text-secondary">
+                            {new Date(invoice.generatedAt).toLocaleDateString("en-IN", {
+                              day: "2-digit",
+                              month: "short",
+                              year: "numeric",
+                            })}
+                          </td>
+                          <td className="px-2 py-2 text-text-secondary">{invoice.products.join(", ") || "—"}</td>
+                          <td className="px-2 py-2 text-right font-semibold text-secondary">
+                            {currency.format(invoice.remainingAmount)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </article>
+            ))
+          )}
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div className="relative isolate min-h-full">

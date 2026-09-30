@@ -64,6 +64,23 @@ export interface LastPartyPurchase {
   partyName: string;
 }
 
+export interface WorkerInvoiceOverview {
+  invoiceNumber: string;
+  generatedAt: string;
+  remainingAmount: number;
+  products: string[];
+}
+
+export interface WorkerPartyOverview {
+  partyId: number;
+  partyName: string;
+  shopName: string | null;
+  mobile: string | null;
+  pendingAmount: number;
+  totalInvoiceCount: number;
+  invoices: WorkerInvoiceOverview[];
+}
+
 export interface DashboardData {
   totalProducts: number;
   totalSuppliers: number;
@@ -79,6 +96,7 @@ export interface DashboardData {
   balances: BalanceSummary;
   overduePartyReminders: OverduePartyReminder[];
   lastPartyPurchase: LastPartyPurchase | null;
+  workerOverview: WorkerPartyOverview[];
 }
 
 export const dashboardApi = {
@@ -121,6 +139,9 @@ export const dashboardApi = {
           ? dashboard.overduePartyReminders
           : [],
         lastPartyPurchase: dashboard.lastPartyPurchase ?? null,
+        workerOverview: Array.isArray(dashboard.workerOverview)
+          ? dashboard.workerOverview
+          : [],
       };
     });
   },
