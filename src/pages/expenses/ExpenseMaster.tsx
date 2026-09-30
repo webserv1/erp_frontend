@@ -87,6 +87,7 @@ export const ExpenseMaster = () => {
 
   const [summary, setSummary] = useState<{
     thisMonthTotal: number;
+    overallTotal: number;
     totalRecords: number;
     activeExpenses: number;
   } | null>(null);
@@ -379,7 +380,7 @@ export const ExpenseMaster = () => {
       </div>
 
       {isAdmin && (
-        <div className="mb-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mb-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           <Card className="p-6">
             <p className="text-sm text-text-secondary">This Month's Total</p>
             {isSqarsGarments ? (
@@ -415,6 +416,44 @@ export const ExpenseMaster = () => {
                 {loading
                   ? "..."
                   : `₹${(summary?.thisMonthTotal ?? 0).toLocaleString("en-IN")}`}
+              </p>
+            )}
+          </Card>
+          <Card className="p-6">
+            <p className="text-sm text-text-secondary">Overall Total Expenses</p>
+            {isSqarsGarments ? (
+              <div className="mt-2">
+                <p className="text-xl font-bold text-secondary">
+                  {loading
+                    ? "..."
+                    : `₹${(summary?.overallTotal ?? 0).toLocaleString("en-IN")}`}
+                </p>
+                <div className="mt-3 grid grid-cols-2 gap-3">
+                  {[
+                    { initials: "SQ", percentage: 50 },
+                    { initials: "ARS", percentage: 50 },
+                  ].map((part) => (
+                    <div
+                      key={part.initials}
+                      className="rounded-lg border border-border-gold px-3 py-2"
+                    >
+                      <p className="text-xs font-bold text-text-secondary">
+                        {part.initials} {part.percentage}%
+                      </p>
+                      <p className="mt-1 text-base font-bold text-secondary">
+                        {loading
+                          ? "..."
+                          : `₹${((summary?.overallTotal ?? 0) * 0.5).toLocaleString("en-IN")}`}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <p className="mt-1 text-2xl font-bold text-secondary">
+                {loading
+                  ? "..."
+                  : `₹${(summary?.overallTotal ?? 0).toLocaleString("en-IN")}`}
               </p>
             )}
           </Card>

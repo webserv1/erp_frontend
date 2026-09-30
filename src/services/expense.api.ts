@@ -41,6 +41,7 @@ const normalizeExpenseList = (data: Record<string, unknown>): ExpenseListRespons
 
 export interface ExpenseSummary {
   thisMonthTotal: number
+  overallTotal: number
   totalRecords: number
   activeExpenses: number
 }
