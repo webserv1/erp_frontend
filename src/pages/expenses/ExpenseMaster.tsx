@@ -188,11 +188,6 @@ export const ExpenseMaster = () => {
     billPreviewRef.current = null;
   };
 
-  const openCreate = () => {
-    resetForm();
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
   const openEdit = (row: Expense) => {
     setEditing(row);
     setForm({
@@ -383,7 +378,22 @@ export const ExpenseMaster = () => {
             </h2>
           </div>
         </div>
-        <Button onClick={openCreate}>+ Add Expense</Button>
+        {isAdmin ? (
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              onClick={() => navigate("/expenses/profit-withdrawals")}
+            >
+              Profit Withdrawal Ledger
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => navigate("/expenses/salary-entries")}
+            >
+              Salary Ledger
+            </Button>
+          </div>
+        ) : null}
       </div>
 
       {isAdmin && (

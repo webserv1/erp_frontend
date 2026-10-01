@@ -351,6 +351,46 @@ export interface ExpenseListResponse {
   limit: number;
 }
 
+export interface ProfitWithdrawal {
+  id: number;
+  companyId: number;
+  sqAmount: number;
+  arsAmount: number;
+  takenAmount: number;
+  balanceAfterEntry: number;
+  entryDate: string;
+  notes?: string | null;
+  createdById?: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProfitWithdrawalSummary {
+  totalProfit: number;
+  totalTaken: number;
+  remainingProfit: number;
+}
+
+export interface SalaryEntry {
+  id: number;
+  companyId: number;
+  sqAmount: number;
+  arsAmount: number;
+  workerAmount: number;
+  entryDate: string;
+  notes?: string | null;
+  createdById?: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SalaryEntrySummary {
+  totalSqAmount: number;
+  totalArsAmount: number;
+  totalWorkerAmount: number;
+  totalSalaryAmount: number;
+}
+
 export interface SalesTrend {
   date: string;
   sales: number;

@@ -14,6 +14,8 @@ import { PurchaseMaster } from '../pages/purchases/PurchaseMaster'
 import { Sales } from '../pages/sales/Sales'
 import { StockMaster } from '../pages/stock/StockMaster'
 import { ExpenseMaster } from '../pages/expenses/ExpenseMaster'
+import { ProfitWithdrawals } from '../pages/expenses/ProfitWithdrawals'
+import { SalaryEntries } from '../pages/expenses/SalaryEntries'
 import { Reports } from '../pages/reports/Reports'
 import { ReportDetail } from '../pages/reports/ReportDetail'
 import { Settings } from '../pages/settings/Settings'
@@ -36,6 +38,8 @@ export const AppRoutes = () => (
         <Route path="/sales" element={<Sales />} />
         <Route path="/stock" element={<StockMaster />} />
         <Route path="/expenses" element={<ExpenseMaster />} />
+        <Route path="/expenses/profit-withdrawals" element={<ProfitWithdrawals />} />
+        <Route path="/expenses/salary-entries" element={<SalaryEntries />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/reports/:id" element={<ReportDetail />} />
         <Route path="/settings" element={<Settings />} />

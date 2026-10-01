@@ -1,5 +1,12 @@
 import type { ApiError } from '../types/auth.types'
-import type { Expense, ExpenseListResponse } from '../types/product.types'
+import type {
+  Expense,
+  ExpenseListResponse,
+  ProfitWithdrawal,
+  ProfitWithdrawalSummary,
+  SalaryEntry,
+  SalaryEntrySummary,
+} from '../types/product.types'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 
@@ -46,6 +53,21 @@ export interface ExpenseSummary {
   activeExpenses: number
 }
 
+export interface ProfitWithdrawalPayload {
+  sqAmount: number
+  arsAmount: number
+  entryDate: string
+  notes?: string
+}
+
+export interface SalaryEntryPayload {
+  sqAmount: number
+  arsAmount: number
+  workerAmount: number
+  entryDate: string
+  notes?: string
+}
+
 export const expenseApi = {
   list: (params?: { search?: string; category?: string; paymentMode?: string; status?: boolean; startDate?: string; endDate?: string; page?: number; limit?: number }) => {
     const query = new URLSearchParams()
@@ -65,4 +87,45 @@ export const expenseApi = {
   update: (id: number, formData: FormData) => request<Expense>(`/expenses/${id}`, { method: 'PUT', body: formData }),
   remove: (id: number) => request<{ message: string }>(`/expenses/${id}`, { method: 'DELETE' }),
   getSummary: () => request<{ summary: ExpenseSummary }>('/expenses/summary').then((res) => res.summary),
+  listProfitWithdrawals: () =>
+    request<{ summary: ProfitWithdrawalSummary; profitWithdrawals: ProfitWithdrawal[] }>(
+      '/expenses/profit-withdrawals',
+    ),
+  createProfitWithdrawal: (payload: ProfitWithdrawalPayload) =>
+    request<{ message: string; profitWithdrawal: ProfitWithdrawal; summary: ProfitWithdrawalSummary }>(
+      '/expenses/profit-withdrawals',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      },
+    ),
+  updateProfitWithdrawal: (id: number, payload: Partial<ProfitWithdrawalPayload>) =>
+    request<{ message: string; profitWithdrawal: ProfitWithdrawal; summary: ProfitWithdrawalSummary }>(
+      `/expenses/profit-withdrawals/${id}`,
+      {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      },
+    ),
+  deleteProfitWithdrawal: (id: number) =>
+    request<{ message: string; summary: ProfitWithdrawalSummary }>(`/expenses/profit-withdrawals/${id}`, {
+      method: 'DELETE',
+    }),
+  listSalaryEntries: () => request<{ salaryEntries: SalaryEntry[]; summary: SalaryEntrySummary }>('/expenses/salary-entries'),
+  createSalaryEntry: (payload: SalaryEntryPayload) =>
+    request<{ message: string; salaryEntry: SalaryEntry }>('/expenses/salary-entries', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }),
+  updateSalaryEntry: (id: number, payload: Partial<SalaryEntryPayload>) =>
+    request<{ message: string; salaryEntry: SalaryEntry }>(`/expenses/salary-entries/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }),
+  deleteSalaryEntry: (id: number) =>
+    request<{ message: string }>(`/expenses/salary-entries/${id}`, { method: 'DELETE' }),
 }
