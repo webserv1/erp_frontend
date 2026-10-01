@@ -378,7 +378,7 @@ export const ExpenseMaster = () => {
             </h2>
           </div>
         </div>
-        {isAdmin ? (
+        {isAdmin && isSqarsGarments ? (
           <div className="flex flex-wrap gap-2">
             <Button
               variant="outline"
