@@ -41,10 +41,12 @@ type SaleLineForm = {
 
 type Form = {
   saleNumber: string;
+  saleDate: string;
   partyId: string;
   partyName: string;
   paidAmount: string;
   discount: string;
+  transport: string;
   paymentStatus: "UNPAID" | "PARTIAL" | "PAID" | "OVERDUE";
   remarks: string;
   status: boolean;
@@ -69,12 +71,16 @@ const createLine = (): SaleLineForm => ({
   salePrice: "0",
 });
 
+const getTodayDate = () => new Date().toISOString().slice(0, 10);
+
 const empty: Form = {
   saleNumber: "",
+  saleDate: getTodayDate(),
   partyId: "",
   partyName: "",
   paidAmount: "0",
   discount: "0",
+  transport: "0",
   paymentStatus: "UNPAID",
   remarks: "",
   status: true,
@@ -320,10 +326,12 @@ export const Sales = () => {
     setEditing(sale);
     setForm({
       saleNumber: sale.saleNumber || "",
+      saleDate: (sale.saleDate || sale.createdAt).slice(0, 10),
       partyId: sale.partyId ? String(sale.partyId) : "",
       partyName: sale.partyName || sale.party?.partyName || "",
       paidAmount: String(sale.paidAmount || 0),
       discount: String(sale.discount || 0),
+      transport: String(sale.transport || 0),
       paymentStatus: sale.paymentStatus,
       remarks: sale.remarks || "",
       status: sale.status,
@@ -355,7 +363,8 @@ export const Sales = () => {
     }
 
     const payload: SalePayload = {
-      saleNumber: editing ? form.saleNumber || undefined : undefined,
+      saleNumber: form.saleNumber.trim() || undefined,
+      saleDate: form.saleDate || undefined,
       partyId: Number(form.partyId),
       partyName: form.partyName || undefined,
       items: form.lines.map((line) => ({
@@ -377,6 +386,7 @@ export const Sales = () => {
       netTotalPurchaseAmount,
       netTotalSalePrice,
       discount: numberOrZero(form.discount),
+      transport: numberOrZero(form.transport),
       paidAmount: numberOrZero(form.paidAmount),
       paymentStatus: form.paymentStatus,
       remarks: form.remarks || undefined,
@@ -472,6 +482,16 @@ export const Sales = () => {
       key: "invoiceNumber",
       header: "Invoice Number",
       cell: (sale) => sale.invoiceNumber || sale.saleNumber || "—",
+    },
+    {
+      key: "saleDate",
+      header: "Sale Date",
+      cell: (sale) =>
+        new Date(sale.saleDate || sale.createdAt).toLocaleDateString("en-IN", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        }),
     },
     {
       key: "productCode",
@@ -576,6 +596,11 @@ export const Sales = () => {
       cell: (sale) => `₹${sale.discount || 0}`,
     },
     {
+      key: "transport",
+      header: "Transport",
+      cell: (sale) => `₹${sale.transport || 0}`,
+    },
+    {
       key: "paidAmount",
       header: "Paid Amount",
       cell: (sale) => `₹${sale.paidAmount}`,
@@ -662,8 +687,27 @@ export const Sales = () => {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <FormField label="Invoice Number">
               <Input
-                readOnly
-                value={form.saleNumber || "Auto-generated on submit"}
+                value={form.saleNumber}
+                onChange={(event) =>
+                  setForm((current) => ({
+                    ...current,
+                    saleNumber: event.target.value,
+                  }))
+                }
+                placeholder="Leave empty for auto generation"
+              />
+            </FormField>
+            <FormField label="Sale Date" required>
+              <Input
+                required
+                type="date"
+                value={form.saleDate}
+                onChange={(event) =>
+                  setForm((current) => ({
+                    ...current,
+                    saleDate: event.target.value,
+                  }))
+                }
               />
             </FormField>
             <FormField label="Shop Name" required>
@@ -731,6 +775,19 @@ export const Sales = () => {
                   setForm((current) => ({
                     ...current,
                     discount: event.target.value,
+                  }))
+                }
+              />
+            </FormField>
+            <FormField label="Transport">
+              <Input
+                min="0"
+                type="number"
+                value={form.transport}
+                onChange={(event) =>
+                  setForm((current) => ({
+                    ...current,
+                    transport: event.target.value,
                   }))
                 }
               />
@@ -1035,6 +1092,26 @@ export const Sales = () => {
               <tbody className="divide-y divide-border-gold">
                 <tr>
                   <td className="px-4 py-2 font-semibold text-text-secondary">
+                    Invoice Number
+                  </td>
+                  <td className="px-4 py-2 text-secondary">
+                    {viewing.invoiceNumber || viewing.saleNumber || "—"}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-2 font-semibold text-text-secondary">
+                    Sale Date
+                  </td>
+                  <td className="px-4 py-2 text-secondary">
+                    {new Date(viewing.saleDate || viewing.createdAt).toLocaleDateString("en-IN", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                    })}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-2 font-semibold text-text-secondary">
                     Party Name
                   </td>
                   <td className="px-4 py-2 text-secondary">
@@ -1133,6 +1210,14 @@ export const Sales = () => {
                   </td>
                   <td className="px-4 py-2 text-secondary">
                     ₹{viewing.discount || 0}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-2 font-semibold text-text-secondary">
+                    Transport
+                  </td>
+                  <td className="px-4 py-2 text-secondary">
+                    ₹{viewing.transport || 0}
                   </td>
                 </tr>
                 <tr>

@@ -76,6 +76,8 @@ export const SaleInvoiceModal = ({
     sale.netTotalSalePrice ||
     saleItems.reduce((sum, item) => sum + item.totalSalePrice, 0);
   const discount = Number(sale.discount) || 0;
+  const transport = Number(sale.transport) || 0;
+  const totalWithTransport = netTotalSalePrice + transport;
   const remainingAmount = Number(sale.remainingAmount) || 0;
   const logoSrc = getInvoiceLogoSrc(invoice);
   const date = new Date(invoice.issueDate).toLocaleDateString("en-IN", {
@@ -224,6 +226,12 @@ export const SaleInvoiceModal = ({
     const summaryValueX = right - 2;
     pdf.text("Grand Total Amount:", summaryLabelX, y);
     writeRight(pdfCurrency(netTotalSalePrice), summaryValueX, y);
+    y += lineGap + 1;
+    pdf.text("Transport:", summaryLabelX, y);
+    writeRight(pdfCurrency(transport), summaryValueX, y);
+    y += lineGap + 1;
+    pdf.text("Total With Transport:", summaryLabelX, y);
+    writeRight(pdfCurrency(totalWithTransport), summaryValueX, y);
     y += lineGap + 1;
     pdf.text("Paid Amount:", summaryLabelX, y);
     writeRight(pdfCurrency(sale.paidAmount), summaryValueX, y);
@@ -375,6 +383,14 @@ export const SaleInvoiceModal = ({
               <div className="flex justify-between">
                 <span className="text-text-secondary">Paid Amount</span>
                 <span className="font-semibold">{currency(sale.paidAmount)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-text-secondary">Transport</span>
+                <span className="font-semibold">{currency(transport)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-text-secondary">Total With Transport</span>
+                <span className="font-semibold">{currency(totalWithTransport)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-text-secondary">Discount</span>

@@ -228,6 +228,7 @@ export interface Sale {
   sizeIds: number[];
   quantity: number;
   unit: "PIECES" | "DOZEN";
+  saleDate?: string;
   salePrice: number;
   totalSalePrice?: number;
   purchasePrice: number;
@@ -236,6 +237,7 @@ export interface Sale {
   netTotalSalePrice?: number;
   NetTotalsaleprice?: number;
   discount?: number;
+  transport?: number;
   paidAmount: number;
   remainingAmount: number;
   paymentStatus: "UNPAID" | "PARTIAL" | "PAID" | "OVERDUE";

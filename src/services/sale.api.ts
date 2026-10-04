@@ -3,6 +3,7 @@ import type { Sale, SaleListResponse } from "../types/product.types";
 
 export type SalePayload = {
   saleNumber?: string;
+  saleDate?: string;
   partyId?: number;
   partyName?: string;
   items: {
@@ -24,6 +25,7 @@ export type SalePayload = {
   netTotalPurchaseAmount?: number;
   netTotalSalePrice: number;
   discount?: number;
+  transport?: number;
   paidAmount?: number;
   paymentStatus?: "UNPAID" | "PARTIAL" | "PAID" | "OVERDUE";
   remarks?: string;
@@ -201,6 +203,8 @@ const normalizeSale = (entry: Sale): Sale => {
     netTotalSalePrice,
     netTotalPurchaseAmount,
     discount: numberOrZero(entry.discount),
+    transport: numberOrZero(entry.transport),
+    saleDate: entry.saleDate || entry.createdAt,
     perSaleProfit:
       numberOrZero(entry.perSaleProfit || entry.persaleprofit) ||
       netTotalSalePrice - netTotalPurchaseAmount,
