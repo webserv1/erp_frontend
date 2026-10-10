@@ -395,92 +395,113 @@ export const PartyReturnFormPage = () => {
                   key={line.rowId}
                   className="grid gap-3 rounded-lg border border-border-gold/50 p-3 sm:grid-cols-2 lg:grid-cols-7"
                 >
-                  <Input
-                    placeholder="Product Code"
-                    value={line.productCode}
-                    onChange={(event) =>
-                      setLine(line.rowId, (currentLine) => ({
-                        ...currentLine,
-                        productCode: event.target.value,
-                      }))
-                    }
-                  />
-                  <Input
-                    placeholder="Product Name"
-                    value={line.productName}
-                    onChange={(event) =>
-                      setLine(line.rowId, (currentLine) => ({
-                        ...currentLine,
-                        productName: event.target.value,
-                      }))
-                    }
-                  />
-                  <Input
-                    type="number"
-                    min={1}
-                    placeholder="Qty"
-                    value={line.quantity}
-                    onChange={(event) =>
-                      setLine(line.rowId, (currentLine) => ({
-                        ...currentLine,
-                        quantity: event.target.value,
-                      }))
-                    }
-                  />
-                  <Select
-                    value={line.unit}
-                    onChange={(event) =>
-                      setLine(line.rowId, (currentLine) => ({
-                        ...currentLine,
-                        unit: event.target.value as ReturnItemForm["unit"],
-                      }))
-                    }
-                  >
-                    <option value="PIECES">Pieces</option>
-                    <option value="DOZEN">Dozen</option>
-                  </Select>
-                  <Input
-                    type="number"
-                    min={0}
-                    step="0.01"
-                    placeholder="Sale Price"
-                    value={line.salePrice}
-                    onChange={(event) =>
-                      setLine(line.rowId, (currentLine) => ({
-                        ...currentLine,
-                        salePrice: event.target.value,
-                      }))
-                    }
-                  />
-                  <Input
-                    type="number"
-                    min={0}
-                    step="0.01"
-                    placeholder="Total Sale Price"
-                    value={line.totalSalePrice}
-                    onChange={(event) =>
-                      setLine(line.rowId, (currentLine) => ({
-                        ...currentLine,
-                        totalSalePrice: event.target.value,
-                      }))
-                    }
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() =>
-                      setForm((current) => ({
-                        ...current,
-                        items:
-                          current.items.length > 1
-                            ? current.items.filter((entry) => entry.rowId !== line.rowId)
-                            : current.items,
-                      }))
-                    }
-                    disabled={form.items.length === 1}
-                  >
-                    Remove
-                  </Button>
+                  <div>
+                    <p className="mb-1 text-xs font-medium text-text-secondary">Product Code</p>
+                    <Input
+                      placeholder="Product Code"
+                      value={line.productCode}
+                      onChange={(event) =>
+                        setLine(line.rowId, (currentLine) => ({
+                          ...currentLine,
+                          productCode: event.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+                  <div>
+                    <p className="mb-1 text-xs font-medium text-text-secondary">Product Name</p>
+                    <Input
+                      placeholder="Product Name"
+                      value={line.productName}
+                      onChange={(event) =>
+                        setLine(line.rowId, (currentLine) => ({
+                          ...currentLine,
+                          productName: event.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+                  <div>
+                    <p className="mb-1 text-xs font-medium text-text-secondary">Quantity</p>
+                    <Input
+                      type="number"
+                      min={1}
+                      placeholder="Qty"
+                      value={line.quantity}
+                      onChange={(event) =>
+                        setLine(line.rowId, (currentLine) => ({
+                          ...currentLine,
+                          quantity: event.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+                  <div>
+                    <p className="mb-1 text-xs font-medium text-text-secondary">Unit</p>
+                    <Select
+                      value={line.unit}
+                      onChange={(event) =>
+                        setLine(line.rowId, (currentLine) => ({
+                          ...currentLine,
+                          unit: event.target.value as ReturnItemForm["unit"],
+                        }))
+                      }
+                    >
+                      <option value="PIECES">Pieces</option>
+                      <option value="DOZEN">Dozen</option>
+                    </Select>
+                  </div>
+                  <div>
+                    <p className="mb-1 text-xs font-medium text-text-secondary">Sale Price</p>
+                    <Input
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      placeholder="Sale Price"
+                      value={line.salePrice}
+                      onChange={(event) =>
+                        setLine(line.rowId, (currentLine) => ({
+                          ...currentLine,
+                          salePrice: event.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+                  <div>
+                    <p className="mb-1 text-xs font-medium text-text-secondary">Total Sale Price</p>
+                    <Input
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      placeholder="Total Sale Price"
+                      value={line.totalSalePrice}
+                      onChange={(event) =>
+                        setLine(line.rowId, (currentLine) => ({
+                          ...currentLine,
+                          totalSalePrice: event.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+                  <div>
+                    <p className="mb-1 text-xs font-medium text-text-secondary">Action</p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() =>
+                        setForm((current) => ({
+                          ...current,
+                          items:
+                            current.items.length > 1
+                              ? current.items.filter((entry) => entry.rowId !== line.rowId)
+                              : current.items,
+                        }))
+                      }
+                      disabled={form.items.length === 1}
+                    >
+                      Remove
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
