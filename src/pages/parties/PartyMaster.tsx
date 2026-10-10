@@ -39,6 +39,15 @@ const emptyForm: FormState = {
   status: true,
 };
 
+const formatInvoiceNumbers = (invoiceNumbers?: string[]) => {
+  if (!Array.isArray(invoiceNumbers) || invoiceNumbers.length === 0) return "—";
+  const visible = invoiceNumbers.slice(0, 2);
+  const remaining = invoiceNumbers.length - visible.length;
+  return remaining > 0
+    ? `${visible.join(", ")} +${remaining} more`
+    : visible.join(", ");
+};
+
 export const PartyMaster = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -208,6 +217,19 @@ export const PartyMaster = () => {
       header: "Party Profit",
       width: "140px",
       cell: (row) => `₹${row.sales_profit}`,
+    },
+    {
+      key: "invoiceCount",
+      header: "Invoices",
+      width: "220px",
+      cell: (row) => (
+        <div>
+          <div className="font-semibold text-secondary">{row.invoiceCount ?? 0}</div>
+          <div className="text-xs text-text-secondary">
+            {formatInvoiceNumbers(row.invoiceNumbers)}
+          </div>
+        </div>
+      ),
     },
     {
       key: "status",
@@ -474,6 +496,24 @@ export const PartyMaster = () => {
                   </td>
                   <td className="px-4 py-2 text-secondary">
                     ₹{viewing.remainingBalance ?? 0}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-2 font-semibold text-text-secondary">
+                    Invoice Count
+                  </td>
+                  <td className="px-4 py-2 text-secondary">
+                    {viewing.invoiceCount ?? 0}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-2 font-semibold text-text-secondary">
+                    Invoice Numbers
+                  </td>
+                  <td className="px-4 py-2 text-secondary">
+                    {viewing.invoiceNumbers?.length
+                      ? viewing.invoiceNumbers.join(", ")
+                      : "—"}
                   </td>
                 </tr>
                 <tr>

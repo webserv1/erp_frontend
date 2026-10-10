@@ -125,6 +125,8 @@ export interface Party {
   sales_profit: number;
   totalPurchase?: number;
   remainingBalance?: number;
+  invoiceCount?: number;
+  invoiceNumbers?: string[];
   status: boolean;
   createdAt: string;
   updatedAt: string;
