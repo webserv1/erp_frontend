@@ -20,6 +20,7 @@ import { Reports } from '../pages/reports/Reports'
 import { ReportDetail } from '../pages/reports/ReportDetail'
 import { Settings } from '../pages/settings/Settings'
 import { PartyReturnPage } from '../pages/returns/PartyReturn'
+import { PartyReturnFormPage } from '../pages/returns/PartyReturnForm'
 import { SupplierReturnPage } from '../pages/returns/SupplierReturn'
 
 export const AppRoutes = () => (
@@ -43,6 +44,8 @@ export const AppRoutes = () => (
         <Route path="/expenses/profit-withdrawals" element={<ProfitWithdrawals />} />
         <Route path="/expenses/salary-entries" element={<SalaryEntries />} />
         <Route path="/returns/party" element={<PartyReturnPage />} />
+        <Route path="/returns/party/new" element={<PartyReturnFormPage />} />
+        <Route path="/returns/party/:id/edit" element={<PartyReturnFormPage />} />
         <Route path="/returns/supplier" element={<SupplierReturnPage />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/reports/:id" element={<ReportDetail />} />
