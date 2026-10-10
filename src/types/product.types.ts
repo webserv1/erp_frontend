@@ -23,14 +23,27 @@ export interface PartyReturn {
   partyId?: number | null;
   partyName: string;
   shopName: string;
-  productDetails?: unknown;
-  amountDetails?: unknown;
+  netTotalSalePrice: number;
+  invoicePaidAmount: number;
+  discount: number;
+  transport: number;
+  invoiceRemainingAmount: number;
+  paymentStatus: "UNPAID" | "PARTIAL" | "PAID" | "OVERDUE";
   reason: string;
   amountPaid: number;
   returnDate: string;
   createdById?: number | null;
   createdAt: string;
   updatedAt: string;
+  items: {
+    id: number;
+    productCode: string;
+    productName: string;
+    quantity: number;
+    unit: "PIECES" | "DOZEN";
+    salePrice: number;
+    totalSalePrice: number;
+  }[];
 }
 
 export interface Color {

@@ -5,60 +5,74 @@ import { useNavigate } from "react-router-dom";
 import { Button, Card, Modal, useToast } from "../../components/ui";
 import { FormField, Input, Select, Textarea } from "../../components/forms";
 import { DataTable, type DataTableAction, type DataTableColumn } from "../../components/table";
-import { partyReturnApi, type InvoiceOption, type PartyReturnPayload } from "../../services/party-return.api";
+import {
+  partyReturnApi,
+  type InvoiceOption,
+  type PartyReturnPayload,
+} from "../../services/party-return.api";
 import type { PartyReturn } from "../../types/product.types";
+
+type ReturnItemForm = {
+  rowId: string;
+  productCode: string;
+  productName: string;
+  quantity: string;
+  unit: "PIECES" | "DOZEN";
+  salePrice: string;
+  totalSalePrice: string;
+};
 
 type FormState = {
   invoiceNumber: string;
   partyId: string;
   partyName: string;
   shopName: string;
-  productDetails: string;
-  amountDetails: string;
   reason: string;
   amountPaid: string;
   returnDate: string;
+  netTotalSalePrice: string;
+  invoicePaidAmount: string;
+  discount: string;
+  transport: string;
+  invoiceRemainingAmount: string;
+  paymentStatus: "UNPAID" | "PARTIAL" | "PAID" | "OVERDUE";
+  items: ReturnItemForm[];
 };
 
 const getToday = () => new Date().toISOString().slice(0, 10);
+const createItem = (): ReturnItemForm => ({
+  rowId: `${Date.now()}-${Math.random()}`,
+  productCode: "",
+  productName: "",
+  quantity: "1",
+  unit: "PIECES",
+  salePrice: "0",
+  totalSalePrice: "0",
+});
 
 const emptyForm: FormState = {
   invoiceNumber: "",
   partyId: "",
   partyName: "",
   shopName: "",
-  productDetails: "",
-  amountDetails: "",
   reason: "",
   amountPaid: "0",
   returnDate: getToday(),
+  netTotalSalePrice: "0",
+  invoicePaidAmount: "0",
+  discount: "0",
+  transport: "0",
+  invoiceRemainingAmount: "0",
+  paymentStatus: "UNPAID",
+  items: [createItem()],
 };
 
-const jsonToText = (value: unknown) => {
-  if (!value) return "";
-  if (typeof value === "string") return value;
-  try {
-    return JSON.stringify(value, null, 2);
-  } catch {
-    return String(value);
-  }
-};
+const num = (value: string | number) => Number(value) || 0;
 
-const toJsonOrString = (value: string) => {
-  const trimmed = value.trim();
-  if (!trimmed) return undefined;
-  try {
-    return JSON.parse(trimmed);
-  } catch {
-    return trimmed;
-  }
-};
-
-const toSummaryText = (value: unknown) => {
-  const text = jsonToText(value).replace(/\s+/g, " ").trim();
-  if (!text) return "—";
-  return text.length > 80 ? `${text.slice(0, 80)}...` : text;
-};
+const formatProducts = (items: PartyReturn["items"]) =>
+  items?.length
+    ? items.map((item) => `${item.productCode} (${item.quantity} ${item.unit})`).join(", ")
+    : "—";
 
 export const PartyReturnPage = () => {
   const navigate = useNavigate();
@@ -96,6 +110,13 @@ export const PartyReturnPage = () => {
     void loadData();
   }, []);
 
+  const setLine = (rowId: string, updater: (line: ReturnItemForm) => ReturnItemForm) => {
+    setForm((current) => ({
+      ...current,
+      items: current.items.map((line) => (line.rowId === rowId ? updater(line) : line)),
+    }));
+  };
+
   const onInvoiceChange = async (invoiceNumber: string) => {
     setForm((current) => ({ ...current, invoiceNumber }));
     if (!invoiceNumber) return;
@@ -107,8 +128,23 @@ export const PartyReturnPage = () => {
         partyId: invoice.partyId ? String(invoice.partyId) : "",
         partyName: invoice.partyName || "",
         shopName: invoice.shopName || "",
-        productDetails: jsonToText(invoice.productDetails),
-        amountDetails: jsonToText(invoice.amountDetails),
+        netTotalSalePrice: String(invoice.netTotalSalePrice || 0),
+        invoicePaidAmount: String(invoice.invoicePaidAmount || 0),
+        discount: String(invoice.discount || 0),
+        transport: String(invoice.transport || 0),
+        invoiceRemainingAmount: String(invoice.invoiceRemainingAmount || 0),
+        paymentStatus: invoice.paymentStatus || "UNPAID",
+        items: invoice.items.length
+          ? invoice.items.map((item) => ({
+              rowId: String(item.id),
+              productCode: item.productCode,
+              productName: item.productName,
+              quantity: String(item.quantity),
+              unit: item.unit,
+              salePrice: String(item.salePrice),
+              totalSalePrice: String(item.totalSalePrice),
+            }))
+          : [createItem()],
       }));
     } catch (error) {
       toast({
@@ -120,7 +156,7 @@ export const PartyReturnPage = () => {
   };
 
   const resetForm = () => {
-    setForm(emptyForm);
+    setForm({ ...emptyForm, items: [createItem()] });
     setEditing(null);
   };
 
@@ -131,11 +167,26 @@ export const PartyReturnPage = () => {
       partyId: row.partyId ? String(row.partyId) : "",
       partyName: row.partyName || "",
       shopName: row.shopName || "",
-      productDetails: jsonToText(row.productDetails),
-      amountDetails: jsonToText(row.amountDetails),
       reason: row.reason || "",
       amountPaid: String(row.amountPaid || 0),
       returnDate: (row.returnDate || row.createdAt).slice(0, 10),
+      netTotalSalePrice: String(row.netTotalSalePrice || 0),
+      invoicePaidAmount: String(row.invoicePaidAmount || 0),
+      discount: String(row.discount || 0),
+      transport: String(row.transport || 0),
+      invoiceRemainingAmount: String(row.invoiceRemainingAmount || 0),
+      paymentStatus: row.paymentStatus || "UNPAID",
+      items: row.items?.length
+        ? row.items.map((item) => ({
+            rowId: String(item.id),
+            productCode: item.productCode,
+            productName: item.productName,
+            quantity: String(item.quantity),
+            unit: item.unit,
+            salePrice: String(item.salePrice),
+            totalSalePrice: String(item.totalSalePrice),
+          }))
+        : [createItem()],
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -147,10 +198,22 @@ export const PartyReturnPage = () => {
       partyId: form.partyId ? Number(form.partyId) : null,
       partyName: form.partyName,
       shopName: form.shopName,
-      productDetails: toJsonOrString(form.productDetails),
-      amountDetails: toJsonOrString(form.amountDetails),
+      items: form.items.map((item) => ({
+        productCode: item.productCode,
+        productName: item.productName,
+        quantity: num(item.quantity),
+        unit: item.unit,
+        salePrice: num(item.salePrice),
+        totalSalePrice: num(item.totalSalePrice),
+      })),
+      netTotalSalePrice: num(form.netTotalSalePrice),
+      invoicePaidAmount: num(form.invoicePaidAmount),
+      discount: num(form.discount),
+      transport: num(form.transport),
+      invoiceRemainingAmount: num(form.invoiceRemainingAmount),
+      paymentStatus: form.paymentStatus,
       reason: form.reason,
-      amountPaid: Number(form.amountPaid || 0),
+      amountPaid: num(form.amountPaid),
       returnDate: form.returnDate,
     };
 
@@ -197,10 +260,19 @@ export const PartyReturnPage = () => {
       { key: "saleNumber", header: "Invoice Number", cell: (row) => row.saleNumber || "Manual" },
       { key: "partyName", header: "Party Name" },
       { key: "shopName", header: "Shop Name" },
-      { key: "productDetails", header: "Product Details", cell: (row) => toSummaryText(row.productDetails) },
-      { key: "amountDetails", header: "Amount Details", cell: (row) => toSummaryText(row.amountDetails) },
+      {
+        key: "products",
+        header: "Product Details",
+        cell: (row) => formatProducts(row.items || []),
+      },
+      { key: "netTotalSalePrice", header: "Net Total", cell: (row) => `₹${row.netTotalSalePrice}` },
+      { key: "invoicePaidAmount", header: "Paid", cell: (row) => `₹${row.invoicePaidAmount}` },
+      { key: "discount", header: "Discount", cell: (row) => `₹${row.discount}` },
+      { key: "transport", header: "Transport", cell: (row) => `₹${row.transport}` },
+      { key: "invoiceRemainingAmount", header: "Remaining", cell: (row) => `₹${row.invoiceRemainingAmount}` },
+      { key: "paymentStatus", header: "Payment Status" },
       { key: "reason", header: "Reason" },
-      { key: "amountPaid", header: "Amount Paid", cell: (row) => `₹${row.amountPaid}` },
+      { key: "amountPaid", header: "Amount Needs To Be Paid", cell: (row) => `₹${row.amountPaid}` },
       {
         key: "returnDate",
         header: "Date",
@@ -299,25 +371,197 @@ export const PartyReturnPage = () => {
                 }
               />
             </FormField>
+            <FormField label="Net Total Sale Price" required>
+              <Input
+                required
+                min={0}
+                step="0.01"
+                type="number"
+                value={form.netTotalSalePrice}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, netTotalSalePrice: event.target.value }))
+                }
+              />
+            </FormField>
+            <FormField label="Paid Amount" required>
+              <Input
+                required
+                min={0}
+                step="0.01"
+                type="number"
+                value={form.invoicePaidAmount}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, invoicePaidAmount: event.target.value }))
+                }
+              />
+            </FormField>
+            <FormField label="Discount" required>
+              <Input
+                required
+                min={0}
+                step="0.01"
+                type="number"
+                value={form.discount}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, discount: event.target.value }))
+                }
+              />
+            </FormField>
+            <FormField label="Transport" required>
+              <Input
+                required
+                min={0}
+                step="0.01"
+                type="number"
+                value={form.transport}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, transport: event.target.value }))
+                }
+              />
+            </FormField>
+            <FormField label="Invoice Remaining Amount" required>
+              <Input
+                required
+                min={0}
+                step="0.01"
+                type="number"
+                value={form.invoiceRemainingAmount}
+                onChange={(event) =>
+                  setForm((current) => ({
+                    ...current,
+                    invoiceRemainingAmount: event.target.value,
+                  }))
+                }
+              />
+            </FormField>
+            <FormField label="Payment Status" required>
+              <Select
+                value={form.paymentStatus}
+                onChange={(event) =>
+                  setForm((current) => ({
+                    ...current,
+                    paymentStatus: event.target.value as FormState["paymentStatus"],
+                  }))
+                }
+              >
+                <option value="UNPAID">Unpaid</option>
+                <option value="PARTIAL">Partial</option>
+                <option value="PAID">Paid</option>
+                <option value="OVERDUE">Overdue</option>
+              </Select>
+            </FormField>
           </div>
-          <FormField label="Product Details">
-            <Textarea
-              rows={4}
-              value={form.productDetails}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, productDetails: event.target.value }))
-              }
-            />
-          </FormField>
-          <FormField label="Amount Details">
-            <Textarea
-              rows={4}
-              value={form.amountDetails}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, amountDetails: event.target.value }))
-              }
-            />
-          </FormField>
+
+          <div className="rounded-lg border border-border-gold p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <p className="font-semibold text-secondary">Product Details</p>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() =>
+                  setForm((current) => ({
+                    ...current,
+                    items: [...current.items, createItem()],
+                  }))
+                }
+              >
+                + Add Product
+              </Button>
+            </div>
+            <div className="space-y-3">
+              {form.items.map((line) => (
+                <div key={line.rowId} className="grid gap-3 rounded-lg border border-border-gold/50 p-3 sm:grid-cols-2 lg:grid-cols-7">
+                  <Input
+                    placeholder="Product Code"
+                    value={line.productCode}
+                    onChange={(event) =>
+                      setLine(line.rowId, (currentLine) => ({
+                        ...currentLine,
+                        productCode: event.target.value,
+                      }))
+                    }
+                  />
+                  <Input
+                    placeholder="Product Name"
+                    value={line.productName}
+                    onChange={(event) =>
+                      setLine(line.rowId, (currentLine) => ({
+                        ...currentLine,
+                        productName: event.target.value,
+                      }))
+                    }
+                  />
+                  <Input
+                    type="number"
+                    min={1}
+                    placeholder="Qty"
+                    value={line.quantity}
+                    onChange={(event) =>
+                      setLine(line.rowId, (currentLine) => ({
+                        ...currentLine,
+                        quantity: event.target.value,
+                      }))
+                    }
+                  />
+                  <Select
+                    value={line.unit}
+                    onChange={(event) =>
+                      setLine(line.rowId, (currentLine) => ({
+                        ...currentLine,
+                        unit: event.target.value as ReturnItemForm["unit"],
+                      }))
+                    }
+                  >
+                    <option value="PIECES">Pieces</option>
+                    <option value="DOZEN">Dozen</option>
+                  </Select>
+                  <Input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    placeholder="Sale Price"
+                    value={line.salePrice}
+                    onChange={(event) =>
+                      setLine(line.rowId, (currentLine) => ({
+                        ...currentLine,
+                        salePrice: event.target.value,
+                      }))
+                    }
+                  />
+                  <Input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    placeholder="Total Sale Price"
+                    value={line.totalSalePrice}
+                    onChange={(event) =>
+                      setLine(line.rowId, (currentLine) => ({
+                        ...currentLine,
+                        totalSalePrice: event.target.value,
+                      }))
+                    }
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() =>
+                      setForm((current) => ({
+                        ...current,
+                        items:
+                          current.items.length > 1
+                            ? current.items.filter((entry) => entry.rowId !== line.rowId)
+                            : current.items,
+                      }))
+                    }
+                    disabled={form.items.length === 1}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+
           <FormField label="Reason For Return" required>
             <Textarea
               required
@@ -328,6 +572,7 @@ export const PartyReturnPage = () => {
               }
             />
           </FormField>
+
           <div className="flex justify-end gap-3">
             <Button type="button" variant="outline" onClick={resetForm}>
               Reset
@@ -363,20 +608,24 @@ export const PartyReturnPage = () => {
             <p><span className="font-semibold">Invoice:</span> {viewing.saleNumber || "Manual"}</p>
             <p><span className="font-semibold">Party:</span> {viewing.partyName}</p>
             <p><span className="font-semibold">Shop:</span> {viewing.shopName}</p>
-            <p><span className="font-semibold">Amount Paid:</span> ₹{viewing.amountPaid}</p>
+            <p><span className="font-semibold">Amount Needs To Be Paid:</span> ₹{viewing.amountPaid}</p>
             <p><span className="font-semibold">Date:</span> {new Date(viewing.returnDate).toLocaleDateString("en-IN")}</p>
             <p><span className="font-semibold">Reason:</span> {viewing.reason}</p>
+            <p><span className="font-semibold">Net Total Sale:</span> ₹{viewing.netTotalSalePrice}</p>
+            <p><span className="font-semibold">Paid Amount:</span> ₹{viewing.invoicePaidAmount}</p>
+            <p><span className="font-semibold">Discount:</span> ₹{viewing.discount}</p>
+            <p><span className="font-semibold">Transport:</span> ₹{viewing.transport}</p>
+            <p><span className="font-semibold">Remaining:</span> ₹{viewing.invoiceRemainingAmount}</p>
+            <p><span className="font-semibold">Payment Status:</span> {viewing.paymentStatus}</p>
             <div>
-              <p className="font-semibold">Product Details</p>
-              <pre className="mt-1 whitespace-pre-wrap rounded-md bg-primary/5 p-3 text-xs">
-                {jsonToText(viewing.productDetails) || "—"}
-              </pre>
-            </div>
-            <div>
-              <p className="font-semibold">Amount Details</p>
-              <pre className="mt-1 whitespace-pre-wrap rounded-md bg-primary/5 p-3 text-xs">
-                {jsonToText(viewing.amountDetails) || "—"}
-              </pre>
+              <p className="font-semibold">Product Rows</p>
+              <div className="mt-2 space-y-2">
+                {viewing.items?.map((item) => (
+                  <div key={item.id} className="rounded-md border border-border-gold/40 px-3 py-2">
+                    {item.productCode} - {item.productName} | {item.quantity} {item.unit} | ₹{item.salePrice} | ₹{item.totalSalePrice}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}

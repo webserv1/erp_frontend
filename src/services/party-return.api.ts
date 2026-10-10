@@ -27,8 +27,20 @@ export type PartyReturnPayload = {
   partyId?: number | null;
   partyName: string;
   shopName: string;
-  productDetails?: unknown;
-  amountDetails?: unknown;
+  items: Array<{
+    productCode: string;
+    productName: string;
+    quantity: number;
+    unit: "PIECES" | "DOZEN";
+    salePrice: number;
+    totalSalePrice: number;
+  }>;
+  netTotalSalePrice: number;
+  invoicePaidAmount: number;
+  discount: number;
+  transport: number;
+  invoiceRemainingAmount: number;
+  paymentStatus: "UNPAID" | "PARTIAL" | "PAID" | "OVERDUE";
   reason: string;
   amountPaid: number;
   returnDate: string;
@@ -47,7 +59,7 @@ export type InvoiceDetails = {
   partyName: string;
   shopName: string;
   saleDate: string;
-  productDetails: Array<{
+  items: Array<{
     id: number;
     productCode: string;
     productName: string;
@@ -56,14 +68,12 @@ export type InvoiceDetails = {
     salePrice: number;
     totalSalePrice: number;
   }>;
-  amountDetails: {
-    netTotalSalePrice: number;
-    paidAmount: number;
-    discount: number;
-    transport: number;
-    remainingAmount: number;
-    paymentStatus: string;
-  };
+  netTotalSalePrice: number;
+  invoicePaidAmount: number;
+  discount: number;
+  transport: number;
+  invoiceRemainingAmount: number;
+  paymentStatus: "UNPAID" | "PARTIAL" | "PAID" | "OVERDUE";
 };
 
 export const partyReturnApi = {
