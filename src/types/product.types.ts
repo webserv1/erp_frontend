@@ -16,6 +16,23 @@ export interface Brand {
   updatedAt: string;
 }
 
+export interface PartyReturn {
+  id: number;
+  companyId: number;
+  saleNumber?: string | null;
+  partyId?: number | null;
+  partyName: string;
+  shopName: string;
+  productDetails?: unknown;
+  amountDetails?: unknown;
+  reason: string;
+  amountPaid: number;
+  returnDate: string;
+  createdById?: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Color {
   id: number;
   companyId: number;
@@ -245,6 +262,7 @@ export interface Sale {
   paymentStatus: "UNPAID" | "PARTIAL" | "PAID" | "OVERDUE";
   perSaleProfit: number;
   persaleprofit?: number;
+  returnAmount?: number;
   remarks?: string;
   status: boolean;
   createdAt: string;

@@ -1,4 +1,4 @@
-import { Boxes, LayoutDashboard, Receipt, Truck, ShoppingCart, Users, Warehouse, Wallet, BarChart3, Settings } from 'lucide-react'
+import { Boxes, LayoutDashboard, Receipt, Truck, ShoppingCart, Users, Warehouse, Wallet, BarChart3, Settings, RotateCcw } from 'lucide-react'
 import type { UserRole } from '../types/auth.types'
 
 export type NavigationItem = {
@@ -25,6 +25,16 @@ export const APP_NAVIGATION: NavigationItem[] = [
   { label: 'Supplier Master', path: '/suppliers', icon: Truck, roles: ['ADMIN', 'MANAGER'] },
   { label: 'Purchase Master', path: '/purchases', icon: ShoppingCart, roles: ['ADMIN', 'MANAGER'] },
   { label: 'Sales', path: '/sales', icon: Receipt, roles: ['ADMIN', 'MANAGER'] },
+  {
+    label: 'Returns',
+    path: '/returns/party',
+    icon: RotateCcw,
+    roles: ['ADMIN', 'MANAGER'],
+    children: [
+      { label: 'Party Return', path: '/returns/party', roles: ['ADMIN', 'MANAGER'] },
+      { label: 'Supplier Return', path: '/returns/supplier', roles: ['ADMIN', 'MANAGER'] },
+    ],
+  },
   { label: 'Stock', path: '/stock', icon: Warehouse, roles: ['ADMIN', 'MANAGER'] },
   { label: 'Expenses', path: '/expenses', icon: Wallet, roles: ['ADMIN', 'MANAGER'] },
   { label: 'Reports', path: '/reports', icon: BarChart3, roles: ['ADMIN', 'MANAGER'] },

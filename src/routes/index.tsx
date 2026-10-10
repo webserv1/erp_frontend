@@ -19,6 +19,8 @@ import { SalaryEntries } from '../pages/expenses/SalaryEntries'
 import { Reports } from '../pages/reports/Reports'
 import { ReportDetail } from '../pages/reports/ReportDetail'
 import { Settings } from '../pages/settings/Settings'
+import { PartyReturnPage } from '../pages/returns/PartyReturn'
+import { SupplierReturnPage } from '../pages/returns/SupplierReturn'
 
 export const AppRoutes = () => (
   <Routes>
@@ -40,6 +42,8 @@ export const AppRoutes = () => (
         <Route path="/expenses" element={<ExpenseMaster />} />
         <Route path="/expenses/profit-withdrawals" element={<ProfitWithdrawals />} />
         <Route path="/expenses/salary-entries" element={<SalaryEntries />} />
+        <Route path="/returns/party" element={<PartyReturnPage />} />
+        <Route path="/returns/supplier" element={<SupplierReturnPage />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/reports/:id" element={<ReportDetail />} />
         <Route path="/settings" element={<Settings />} />
