@@ -71,6 +71,11 @@ export const SupplierReturnFormPage = () => {
   const [productOptions, setProductOptions] = useState<ProductCodeOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const selectedPurchaseNumber = purchaseOptions.some(
+    (purchase) => purchase.purchaseNumber === form.purchaseNumber,
+  )
+    ? form.purchaseNumber
+    : "";
 
   const setLine = (
     rowId: string,
@@ -261,18 +266,32 @@ export const SupplierReturnFormPage = () => {
         <form onSubmit={onSubmit} className="space-y-5">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <FormField label="Purchase Number">
-              <Input
-                list="supplier-return-purchase-options"
-                value={form.purchaseNumber}
+              <Select
+                value={selectedPurchaseNumber}
                 onChange={(event) => void onPurchaseNumberChange(event.target.value)}
-                placeholder="Select or type purchase number"
+                disabled={loading}
+              >
+                <option value="">Select purchase number</option>
+                {purchaseOptions.map((purchase) => (
+                  <option key={purchase.purchaseNumber} value={purchase.purchaseNumber}>
+                    {purchase.purchaseNumber}
+                    {purchase.supplierName ? ` - ${purchase.supplierName}` : ""}
+                  </option>
+                ))}
+              </Select>
+              <Input
+                className="mt-2"
+                value={form.purchaseNumber}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, purchaseNumber: event.target.value }))
+                }
+                onBlur={() => {
+                  const normalized = form.purchaseNumber.trim();
+                  if (normalized) void onPurchaseNumberChange(normalized);
+                }}
+                placeholder="Or type purchase number manually"
                 disabled={loading}
               />
-              <datalist id="supplier-return-purchase-options">
-                {purchaseOptions.map((purchase) => (
-                  <option key={purchase.purchaseNumber} value={purchase.purchaseNumber} />
-                ))}
-              </datalist>
             </FormField>
             <FormField label="Supplier Name" required>
               <Input
