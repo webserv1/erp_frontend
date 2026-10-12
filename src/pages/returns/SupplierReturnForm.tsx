@@ -38,6 +38,7 @@ type FormState = {
 
 const getToday = () => new Date().toISOString().slice(0, 10);
 const num = (value: string | number) => Number(value) || 0;
+const roomyInputClass = "mt-2 px-4 py-3 text-base leading-6";
 const createItem = (): SupplierReturnItemForm => ({
   rowId: `${Date.now()}-${Math.random()}`,
   productCode: "",
@@ -287,6 +288,7 @@ export const SupplierReturnFormPage = () => {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <FormField label="Purchase Number">
               <Select
+                className={roomyInputClass}
                 value={selectedPurchaseNumber}
                 onChange={(event) => void onPurchaseNumberChange(event.target.value)}
                 disabled={loading}
@@ -303,6 +305,7 @@ export const SupplierReturnFormPage = () => {
             </FormField>
             <FormField label="Supplier Name" required>
               <Input
+                className={roomyInputClass}
                 required
                 value={form.supplierName}
                 onChange={(event) =>
@@ -312,6 +315,7 @@ export const SupplierReturnFormPage = () => {
             </FormField>
             <FormField label="Address" required>
               <Input
+                className={roomyInputClass}
                 required
                 value={form.supplierAddress}
                 onChange={(event) =>
@@ -321,6 +325,7 @@ export const SupplierReturnFormPage = () => {
             </FormField>
             <FormField label="Invoice Date" required>
               <Input
+                className={roomyInputClass}
                 required
                 type="date"
                 value={form.invoiceDate}
@@ -331,6 +336,7 @@ export const SupplierReturnFormPage = () => {
             </FormField>
             <FormField label="Payment Status" required>
               <Select
+                className={roomyInputClass}
                 value={form.paymentStatus}
                 onChange={(event) =>
                   setForm((current) => ({
@@ -347,6 +353,7 @@ export const SupplierReturnFormPage = () => {
             </FormField>
             <FormField label="Return Amount Received" required>
               <Input
+                className={roomyInputClass}
                 required
                 min={0}
                 step="0.01"
@@ -358,7 +365,7 @@ export const SupplierReturnFormPage = () => {
               />
             </FormField>
             <FormField label="Net Total Purchase Amount">
-              <Input value={form.netTotalPurchaseAmount} readOnly disabled />
+              <Input className={roomyInputClass} value={form.netTotalPurchaseAmount} readOnly disabled />
             </FormField>
           </div>
 
@@ -378,24 +385,26 @@ export const SupplierReturnFormPage = () => {
                 + Add Product
               </Button>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-4">
               {form.items.map((line) => (
                 <div
                   key={line.rowId}
-                  className="grid gap-4 rounded-xl border border-border-gold/50 p-4 md:grid-cols-2 xl:grid-cols-12 xl:items-end"
+                  className="grid gap-5 rounded-xl border border-border-gold/50 p-5 md:grid-cols-2 xl:grid-cols-6"
                 >
-                  <div className="xl:col-span-2">
+                  <div className="space-y-2">
                     <p className="mb-1 text-xs font-medium text-text-secondary">Product Code</p>
                     <Input
+                      className={roomyInputClass}
                       list="supplier-return-product-codes"
                       value={line.productCode}
                       placeholder="Select or type code"
                       onChange={(event) => void onProductCodeChange(line.rowId, event.target.value)}
                     />
                   </div>
-                  <div className="xl:col-span-2">
+                  <div className="space-y-2">
                     <p className="mb-1 text-xs font-medium text-text-secondary">Product Name</p>
                     <Input
+                      className={roomyInputClass}
                       value={line.productName}
                       onChange={(event) =>
                         setLine(line.rowId, (currentLine) => ({
@@ -405,9 +414,10 @@ export const SupplierReturnFormPage = () => {
                       }
                     />
                   </div>
-                  <div className="xl:col-span-1">
+                  <div className="space-y-2">
                     <p className="mb-1 text-xs font-medium text-text-secondary">Size</p>
                     <Input
+                      className={roomyInputClass}
                       value={line.sizeName}
                       onChange={(event) =>
                         setLine(line.rowId, (currentLine) => ({
@@ -417,9 +427,10 @@ export const SupplierReturnFormPage = () => {
                       }
                     />
                   </div>
-                  <div className="xl:col-span-1">
+                  <div className="space-y-2">
                     <p className="mb-1 text-xs font-medium text-text-secondary">Color</p>
                     <Input
+                      className={roomyInputClass}
                       value={line.colorName}
                       onChange={(event) =>
                         setLine(line.rowId, (currentLine) => ({
@@ -429,9 +440,10 @@ export const SupplierReturnFormPage = () => {
                       }
                     />
                   </div>
-                  <div className="xl:col-span-1">
+                  <div className="space-y-2">
                     <p className="mb-1 text-xs font-medium text-text-secondary">Brand</p>
                     <Input
+                      className={roomyInputClass}
                       value={line.brandName}
                       onChange={(event) =>
                         setLine(line.rowId, (currentLine) => ({
@@ -441,9 +453,10 @@ export const SupplierReturnFormPage = () => {
                       }
                     />
                   </div>
-                  <div className="xl:col-span-1">
+                  <div className="space-y-2">
                     <p className="mb-1 text-xs font-medium text-text-secondary">Qty</p>
                     <Input
+                      className={roomyInputClass}
                       type="number"
                       min={1}
                       value={line.quantity}
@@ -455,9 +468,10 @@ export const SupplierReturnFormPage = () => {
                       }
                     />
                   </div>
-                  <div className="xl:col-span-1">
+                  <div className="space-y-2">
                     <p className="mb-1 text-xs font-medium text-text-secondary">Unit</p>
                     <Select
+                      className={roomyInputClass}
                       value={line.unit}
                       onChange={(event) =>
                         setLine(line.rowId, (currentLine) => ({
@@ -470,9 +484,10 @@ export const SupplierReturnFormPage = () => {
                       <option value="DOZEN">Dozen</option>
                     </Select>
                   </div>
-                  <div className="xl:col-span-1">
+                  <div className="space-y-2">
                     <p className="mb-1 text-xs font-medium text-text-secondary">Purchase Amount</p>
                     <Input
+                      className={roomyInputClass}
                       type="number"
                       min={0}
                       step="0.01"
@@ -485,9 +500,10 @@ export const SupplierReturnFormPage = () => {
                       }
                     />
                   </div>
-                  <div className="xl:col-span-1">
+                  <div className="space-y-2">
                     <p className="mb-1 text-xs font-medium text-text-secondary">Total Purchase</p>
                     <Input
+                      className={roomyInputClass}
                       type="number"
                       min={0}
                       step="0.01"
@@ -500,9 +516,10 @@ export const SupplierReturnFormPage = () => {
                       }
                     />
                   </div>
-                  <div className="xl:col-span-1">
+                  <div className="space-y-2">
                     <p className="mb-1 text-xs font-medium text-text-secondary">Action</p>
                     <Button
+                      className="mt-2 w-full py-3"
                       type="button"
                       variant="outline"
                       onClick={() =>
