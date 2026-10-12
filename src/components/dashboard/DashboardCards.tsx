@@ -39,8 +39,9 @@ export const KpiCard = ({
   onClick?: () => void;
 }) => {
   const colors = accentClasses[accent];
-  const cardClassName =
-    "premium-card flex h-[138px] w-[156px] max-w-full flex-col items-center justify-center gap-1 px-3 py-3 text-center";
+  const cardClassName = breakdown
+    ? "premium-card flex h-[208px] w-[196px] max-w-full flex-col items-center justify-start gap-2 px-4 py-3 text-center"
+    : "premium-card flex h-[146px] w-[172px] max-w-full flex-col items-center justify-center gap-1.5 px-4 py-4 text-center";
 
   if (onClick) {
     return (
@@ -59,13 +60,16 @@ export const KpiCard = ({
             <p className="text-sm font-bold tabular-nums text-text-primary">
               Total {value}
             </p>
-            <div className="mt-1 flex justify-center gap-3">
-              {breakdown.map((part) => (
-                <div key={part.initials} className="min-w-0">
-                  <p className="text-[10px] font-bold uppercase text-text-secondary">
+            <div className="mt-2 grid w-full grid-cols-2 gap-2 rounded-md bg-slate-50/80 px-2.5 py-2">
+              {breakdown.map((part, index) => (
+                <div
+                  key={part.initials}
+                  className={`min-w-0 px-2 ${index > 0 ? "border-l border-border-gold/80" : ""}`}
+                >
+                  <p className="text-[11px] font-bold uppercase tracking-wide text-secondary">
                     {part.initials} {part.percentage}%
                   </p>
-                  <p className="truncate text-xs font-bold tabular-nums text-text-primary">
+                  <p className="mt-1 whitespace-nowrap text-[1rem] font-bold tabular-nums text-text-primary">
                     {part.amount}
                   </p>
                 </div>
@@ -77,7 +81,7 @@ export const KpiCard = ({
             {value}
           </p>
         )}
-        <p className="line-clamp-2 text-sm font-medium leading-4 text-text-secondary">
+        <p className="mt-auto pb-1 text-sm font-medium leading-4 text-text-secondary">
           {label}
         </p>
       </button>
@@ -96,13 +100,16 @@ export const KpiCard = ({
           <p className="text-sm font-bold tabular-nums text-text-primary">
             Total {value}
           </p>
-          <div className="mt-1 flex justify-center gap-3">
-            {breakdown.map((part) => (
-              <div key={part.initials} className="min-w-0">
-                <p className="text-[10px] font-bold uppercase text-text-secondary">
+          <div className="mt-2 grid w-full grid-cols-2 gap-2 rounded-md bg-slate-50/80 px-2.5 py-2">
+            {breakdown.map((part, index) => (
+              <div
+                key={part.initials}
+                className={`min-w-0 px-2 ${index > 0 ? "border-l border-border-gold/80" : ""}`}
+              >
+                <p className="text-[11px] font-bold uppercase tracking-wide text-secondary">
                   {part.initials} {part.percentage}%
                 </p>
-                <p className="truncate text-xs font-bold tabular-nums text-text-primary">
+                <p className="mt-1 whitespace-nowrap text-[1rem] font-bold tabular-nums text-text-primary">
                   {part.amount}
                 </p>
               </div>
@@ -114,7 +121,7 @@ export const KpiCard = ({
           {value}
         </p>
       )}
-      <p className="line-clamp-2 text-sm font-medium leading-4 text-text-secondary">
+      <p className="mt-auto pb-1 text-sm font-medium leading-4 text-text-secondary">
         {label}
       </p>
     </article>

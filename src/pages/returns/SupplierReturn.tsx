@@ -72,6 +72,11 @@ export const SupplierReturnPage = () => {
   const columns = useMemo<DataTableColumn<SupplierReturn>[]>(
     () => [
       { key: "purchaseNumber", header: "Purchase Number", cell: (row) => row.purchaseNumber || "Manual" },
+      {
+        key: "returnAmountReceived",
+        header: "Return Amount Received",
+        cell: (row) => <span className="font-semibold whitespace-nowrap">₹{row.returnAmountReceived}</span>,
+      },
       { key: "supplierName", header: "Supplier Name" },
       { key: "supplierAddress", header: "Address" },
       {
@@ -85,7 +90,6 @@ export const SupplierReturnPage = () => {
           }),
       },
       { key: "paymentStatus", header: "Payment Status" },
-      { key: "returnAmountReceived", header: "Return Amount Received", cell: (row) => `₹${row.returnAmountReceived}` },
       {
         key: "productCode",
         header: "Product Code",
