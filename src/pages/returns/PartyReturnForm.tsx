@@ -270,7 +270,7 @@ export const PartyReturnFormPage = () => {
                 }
               />
             </FormField>
-            <FormField label="Amount Needs To Be Paid" required>
+            <FormField label="Return amount" required>
               <Input
                 required
                 min={0}

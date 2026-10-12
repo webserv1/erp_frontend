@@ -71,7 +71,7 @@ export const PartyReturnPage = () => {
       { key: "invoiceRemainingAmount", header: "Remaining", cell: (row) => `₹${row.invoiceRemainingAmount}` },
       { key: "paymentStatus", header: "Payment Status" },
       { key: "reason", header: "Reason" },
-      { key: "amountPaid", header: "Amount Needs To Be Paid", cell: (row) => `₹${row.amountPaid}` },
+      { key: "amountPaid", header: "Return Amount", cell: (row) => `₹${row.amountPaid}` },
       {
         key: "returnDate",
         header: "Date",
@@ -143,7 +143,7 @@ export const PartyReturnPage = () => {
             <p><span className="font-semibold">Invoice:</span> {viewing.saleNumber || "Manual"}</p>
             <p><span className="font-semibold">Party:</span> {viewing.partyName}</p>
             <p><span className="font-semibold">Shop:</span> {viewing.shopName}</p>
-            <p><span className="font-semibold">Amount Needs To Be Paid:</span> ₹{viewing.amountPaid}</p>
+            <p><span className="font-semibold">Return Amount:</span> ₹{viewing.amountPaid}</p>
             <p><span className="font-semibold">Date:</span> {new Date(viewing.returnDate).toLocaleDateString("en-IN")}</p>
             <p><span className="font-semibold">Reason:</span> {viewing.reason}</p>
             <p><span className="font-semibold">Net Total Sale:</span> ₹{viewing.netTotalSalePrice}</p>
