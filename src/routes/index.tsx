@@ -22,6 +22,7 @@ import { Settings } from '../pages/settings/Settings'
 import { PartyReturnPage } from '../pages/returns/PartyReturn'
 import { PartyReturnFormPage } from '../pages/returns/PartyReturnForm'
 import { SupplierReturnPage } from '../pages/returns/SupplierReturn'
+import { SupplierReturnFormPage } from '../pages/returns/SupplierReturnForm'
 
 export const AppRoutes = () => (
   <Routes>
@@ -47,6 +48,8 @@ export const AppRoutes = () => (
         <Route path="/returns/party/new" element={<PartyReturnFormPage />} />
         <Route path="/returns/party/:id/edit" element={<PartyReturnFormPage />} />
         <Route path="/returns/supplier" element={<SupplierReturnPage />} />
+        <Route path="/returns/supplier/new" element={<SupplierReturnFormPage />} />
+        <Route path="/returns/supplier/:id/edit" element={<SupplierReturnFormPage />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/reports/:id" element={<ReportDetail />} />
         <Route path="/settings" element={<Settings />} />

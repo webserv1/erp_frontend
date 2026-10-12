@@ -46,6 +46,33 @@ export interface PartyReturn {
   }[];
 }
 
+export interface SupplierReturn {
+  id: number;
+  companyId: number;
+  purchaseNumber?: string | null;
+  supplierId?: number | null;
+  supplierName: string;
+  supplierAddress: string;
+  invoiceDate: string;
+  paymentStatus: "UNPAID" | "PARTIAL" | "PAID" | "OVERDUE";
+  returnAmountReceived: number;
+  createdById?: number | null;
+  createdAt: string;
+  updatedAt: string;
+  items: {
+    id: number;
+    productCode: string;
+    productName: string;
+    sizeName?: string | null;
+    colorName?: string | null;
+    brandName?: string | null;
+    quantity: number;
+    unit: "PIECES" | "DOZEN";
+    purchaseAmount: number;
+    totalPurchaseAmount: number;
+  }[];
+}
+
 export interface Color {
   id: number;
   companyId: number;
