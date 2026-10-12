@@ -31,6 +31,7 @@ type FormState = {
   supplierAddress: string;
   invoiceDate: string;
   paymentStatus: "UNPAID" | "PARTIAL" | "PAID" | "OVERDUE";
+  netTotalPurchaseAmount: string;
   returnAmountReceived: string;
   items: SupplierReturnItemForm[];
 };
@@ -57,6 +58,7 @@ const emptyForm: FormState = {
   supplierAddress: "",
   invoiceDate: getToday(),
   paymentStatus: "UNPAID",
+  netTotalPurchaseAmount: "0",
   returnAmountReceived: "0",
   items: [createItem()],
 };
@@ -106,6 +108,12 @@ export const SupplierReturnFormPage = () => {
           supplierAddress: existing.supplierAddress || "",
           invoiceDate: (existing.invoiceDate || existing.createdAt).slice(0, 10),
           paymentStatus: existing.paymentStatus || "UNPAID",
+          netTotalPurchaseAmount: String(
+            existing.items.reduce(
+              (sum, item) => sum + (Number(item.totalPurchaseAmount) || 0),
+              0,
+            ),
+          ),
           returnAmountReceived: String(existing.returnAmountReceived || 0),
           items: existing.items?.length
             ? existing.items.map((item) => ({
@@ -140,7 +148,18 @@ export const SupplierReturnFormPage = () => {
 
   const onPurchaseNumberChange = async (purchaseNumber: string) => {
     setForm((current) => ({ ...current, purchaseNumber }));
-    if (!purchaseNumber) return;
+    if (!purchaseNumber) {
+      setForm((current) => ({
+        ...current,
+        purchaseNumber: "",
+        supplierId: "",
+        supplierName: "",
+        supplierAddress: "",
+        netTotalPurchaseAmount: "0",
+        items: [createItem()],
+      }));
+      return;
+    }
     try {
       const purchase = await supplierReturnApi.purchaseDetails(purchaseNumber);
       setForm((current) => ({
@@ -151,6 +170,7 @@ export const SupplierReturnFormPage = () => {
         supplierAddress: purchase.supplierAddress || "",
         invoiceDate: (purchase.invoiceDate || getToday()).slice(0, 10),
         paymentStatus: purchase.paymentStatus || "UNPAID",
+        netTotalPurchaseAmount: String(purchase.netTotalPurchaseAmount || 0),
         items: purchase.items.length
           ? purchase.items.map((item) => ({
               rowId: String(item.id),
@@ -270,6 +290,7 @@ export const SupplierReturnFormPage = () => {
                 value={selectedPurchaseNumber}
                 onChange={(event) => void onPurchaseNumberChange(event.target.value)}
                 disabled={loading}
+                required
               >
                 <option value="">Select purchase number</option>
                 {purchaseOptions.map((purchase) => (
@@ -279,19 +300,6 @@ export const SupplierReturnFormPage = () => {
                   </option>
                 ))}
               </Select>
-              <Input
-                className="mt-2"
-                value={form.purchaseNumber}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, purchaseNumber: event.target.value }))
-                }
-                onBlur={() => {
-                  const normalized = form.purchaseNumber.trim();
-                  if (normalized) void onPurchaseNumberChange(normalized);
-                }}
-                placeholder="Or type purchase number manually"
-                disabled={loading}
-              />
             </FormField>
             <FormField label="Supplier Name" required>
               <Input
@@ -349,6 +357,9 @@ export const SupplierReturnFormPage = () => {
                 }
               />
             </FormField>
+            <FormField label="Net Total Purchase Amount">
+              <Input value={form.netTotalPurchaseAmount} readOnly disabled />
+            </FormField>
           </div>
 
           <div className="rounded-lg border border-border-gold p-4">
@@ -371,9 +382,9 @@ export const SupplierReturnFormPage = () => {
               {form.items.map((line) => (
                 <div
                   key={line.rowId}
-                  className="grid gap-3 rounded-lg border border-border-gold/50 p-3 sm:grid-cols-2 lg:grid-cols-10"
+                  className="grid gap-4 rounded-xl border border-border-gold/50 p-4 md:grid-cols-2 xl:grid-cols-12 xl:items-end"
                 >
-                  <div>
+                  <div className="xl:col-span-2">
                     <p className="mb-1 text-xs font-medium text-text-secondary">Product Code</p>
                     <Input
                       list="supplier-return-product-codes"
@@ -382,7 +393,7 @@ export const SupplierReturnFormPage = () => {
                       onChange={(event) => void onProductCodeChange(line.rowId, event.target.value)}
                     />
                   </div>
-                  <div>
+                  <div className="xl:col-span-2">
                     <p className="mb-1 text-xs font-medium text-text-secondary">Product Name</p>
                     <Input
                       value={line.productName}
@@ -394,7 +405,7 @@ export const SupplierReturnFormPage = () => {
                       }
                     />
                   </div>
-                  <div>
+                  <div className="xl:col-span-1">
                     <p className="mb-1 text-xs font-medium text-text-secondary">Size</p>
                     <Input
                       value={line.sizeName}
@@ -406,7 +417,7 @@ export const SupplierReturnFormPage = () => {
                       }
                     />
                   </div>
-                  <div>
+                  <div className="xl:col-span-1">
                     <p className="mb-1 text-xs font-medium text-text-secondary">Color</p>
                     <Input
                       value={line.colorName}
@@ -418,7 +429,7 @@ export const SupplierReturnFormPage = () => {
                       }
                     />
                   </div>
-                  <div>
+                  <div className="xl:col-span-1">
                     <p className="mb-1 text-xs font-medium text-text-secondary">Brand</p>
                     <Input
                       value={line.brandName}
@@ -430,7 +441,7 @@ export const SupplierReturnFormPage = () => {
                       }
                     />
                   </div>
-                  <div>
+                  <div className="xl:col-span-1">
                     <p className="mb-1 text-xs font-medium text-text-secondary">Qty</p>
                     <Input
                       type="number"
@@ -444,7 +455,7 @@ export const SupplierReturnFormPage = () => {
                       }
                     />
                   </div>
-                  <div>
+                  <div className="xl:col-span-1">
                     <p className="mb-1 text-xs font-medium text-text-secondary">Unit</p>
                     <Select
                       value={line.unit}
@@ -459,7 +470,7 @@ export const SupplierReturnFormPage = () => {
                       <option value="DOZEN">Dozen</option>
                     </Select>
                   </div>
-                  <div>
+                  <div className="xl:col-span-1">
                     <p className="mb-1 text-xs font-medium text-text-secondary">Purchase Amount</p>
                     <Input
                       type="number"
@@ -474,7 +485,7 @@ export const SupplierReturnFormPage = () => {
                       }
                     />
                   </div>
-                  <div>
+                  <div className="xl:col-span-1">
                     <p className="mb-1 text-xs font-medium text-text-secondary">Total Purchase</p>
                     <Input
                       type="number"
@@ -489,7 +500,7 @@ export const SupplierReturnFormPage = () => {
                       }
                     />
                   </div>
-                  <div>
+                  <div className="xl:col-span-1">
                     <p className="mb-1 text-xs font-medium text-text-secondary">Action</p>
                     <Button
                       type="button"

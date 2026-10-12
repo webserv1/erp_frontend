@@ -56,6 +56,7 @@ export type PurchaseDetails = {
   supplierAddress: string;
   invoiceDate: string;
   paymentStatus: "UNPAID" | "PARTIAL" | "PAID" | "OVERDUE";
+  netTotalPurchaseAmount: number;
   items: Array<{
     id: number;
     productCode: string;
