@@ -77,6 +77,7 @@ export const SupplierReturnPage = () => {
         header: "Return Amount Received",
         cell: (row) => <span className="font-semibold whitespace-nowrap">₹{row.returnAmountReceived}</span>,
       },
+      { key: "reason", header: "Reason", cell: (row) => row.reason || "—" },
       { key: "supplierName", header: "Supplier Name" },
       { key: "supplierAddress", header: "Address" },
       {
@@ -202,6 +203,7 @@ export const SupplierReturnPage = () => {
             <p><span className="font-semibold">Invoice Date:</span> {new Date(viewing.invoiceDate).toLocaleDateString("en-IN")}</p>
             <p><span className="font-semibold">Payment Status:</span> {viewing.paymentStatus}</p>
             <p><span className="font-semibold">Return Amount Received:</span> ₹{viewing.returnAmountReceived}</p>
+            <p><span className="font-semibold">Reason:</span> {viewing.reason || "—"}</p>
             <p><span className="font-semibold">Purchase Products:</span> {formatProducts(viewing.items || [])}</p>
           </div>
         )}

@@ -30,6 +30,7 @@ export type SupplierReturnPayload = {
   invoiceDate: string;
   paymentStatus: "UNPAID" | "PARTIAL" | "PAID" | "OVERDUE";
   returnAmountReceived: number;
+  reason: string;
   items: Array<{
     productCode: string;
     productName: string;

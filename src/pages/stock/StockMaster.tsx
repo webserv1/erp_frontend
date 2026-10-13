@@ -148,6 +148,24 @@ export const StockMaster = () => {
       },
     },
     {
+      key: "returns",
+      header: "Returns",
+      cell: (stock) => (
+        <div className="max-w-52 whitespace-normal text-xs leading-5">
+          {stock.returns || "—"}
+        </div>
+      ),
+    },
+    {
+      key: "returnReason",
+      header: "Reason",
+      cell: (stock) => (
+        <div className="max-w-56 whitespace-normal text-xs leading-5">
+          {stock.returnReason || "—"}
+        </div>
+      ),
+    },
+    {
       key: "purchasePrice",
       header: "Last Purchase Price",
       cell: (stock) => {

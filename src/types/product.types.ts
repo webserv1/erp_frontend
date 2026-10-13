@@ -56,6 +56,7 @@ export interface SupplierReturn {
   invoiceDate: string;
   paymentStatus: "UNPAID" | "PARTIAL" | "PAID" | "OVERDUE";
   returnAmountReceived: number;
+  reason?: string | null;
   createdById?: number | null;
   createdAt: string;
   updatedAt: string;
@@ -365,6 +366,8 @@ export interface Stock {
   qtyOutUnitDisplay?: string;
   balanceStock: number;
   balanceStockDisplay?: string;
+  returns?: string;
+  returnReason?: string;
   salePrice: number;
   purchasePrice: number;
   latestPurchasePrice?: number;

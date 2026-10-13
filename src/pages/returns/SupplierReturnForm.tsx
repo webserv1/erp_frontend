@@ -33,6 +33,7 @@ type FormState = {
   paymentStatus: "UNPAID" | "PARTIAL" | "PAID" | "OVERDUE";
   netTotalPurchaseAmount: string;
   returnAmountReceived: string;
+  reason: string;
   items: SupplierReturnItemForm[];
 };
 
@@ -61,6 +62,7 @@ const emptyForm: FormState = {
   paymentStatus: "UNPAID",
   netTotalPurchaseAmount: "0",
   returnAmountReceived: "0",
+  reason: "",
   items: [createItem()],
 };
 
@@ -116,6 +118,7 @@ export const SupplierReturnFormPage = () => {
             ),
           ),
           returnAmountReceived: String(existing.returnAmountReceived || 0),
+          reason: existing.reason || "",
           items: existing.items?.length
             ? existing.items.map((item) => ({
                 rowId: String(item.id),
@@ -157,6 +160,7 @@ export const SupplierReturnFormPage = () => {
         supplierName: "",
         supplierAddress: "",
         netTotalPurchaseAmount: "0",
+        reason: current.reason,
         items: [createItem()],
       }));
       return;
@@ -172,6 +176,7 @@ export const SupplierReturnFormPage = () => {
         invoiceDate: (purchase.invoiceDate || getToday()).slice(0, 10),
         paymentStatus: purchase.paymentStatus || "UNPAID",
         netTotalPurchaseAmount: String(purchase.netTotalPurchaseAmount || 0),
+        reason: current.reason,
         items: purchase.items.length
           ? purchase.items.map((item) => ({
               rowId: String(item.id),
@@ -235,6 +240,7 @@ export const SupplierReturnFormPage = () => {
       invoiceDate: form.invoiceDate,
       paymentStatus: form.paymentStatus,
       returnAmountReceived: num(form.returnAmountReceived),
+      reason: form.reason,
       items: form.items.map((item) => ({
         productCode: item.productCode,
         productName: item.productName,
@@ -366,6 +372,17 @@ export const SupplierReturnFormPage = () => {
             </FormField>
             <FormField label="Net Total Purchase Amount">
               <Input className={roomyInputClass} value={form.netTotalPurchaseAmount} readOnly disabled />
+            </FormField>
+            <FormField label="Reason for Return" required>
+              <Input
+                className={roomyInputClass}
+                required
+                value={form.reason}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, reason: event.target.value }))
+                }
+                placeholder="Enter reason (e.g. damaged, wrong size)"
+              />
             </FormField>
           </div>
 
