@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import { Card } from '../ui'
 import { cn } from '../utils'
@@ -60,21 +60,64 @@ export const DataTable = <T,>({
   sortDirection,
   pagination,
 }: DataTableProps<T>) => {
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null)
+  const [canScrollUp, setCanScrollUp] = useState(false)
+  const [canScrollDown, setCanScrollDown] = useState(false)
   const columnCount = columns.length + (actions ? 1 : 0)
   const canGoBack = pagination && pagination.page > 1 && pagination.total > 0
   const canGoForward = pagination && pagination.page < pagination.totalPages && pagination.total > 0
 
+  const syncScrollButtons = useCallback(() => {
+    const container = scrollContainerRef.current
+    if (!container) {
+      setCanScrollUp(false)
+      setCanScrollDown(false)
+      return
+    }
+
+    const { scrollTop, clientHeight, scrollHeight } = container
+    setCanScrollUp(scrollTop > 0)
+    setCanScrollDown(scrollTop + clientHeight < scrollHeight - 1)
+  }, [])
+
+  useEffect(() => {
+    syncScrollButtons()
+    const container = scrollContainerRef.current
+    if (!container) return
+
+    container.addEventListener('scroll', syncScrollButtons)
+    window.addEventListener('resize', syncScrollButtons)
+
+    return () => {
+      container.removeEventListener('scroll', syncScrollButtons)
+      window.removeEventListener('resize', syncScrollButtons)
+    }
+  }, [rows, loading, pagination?.page, pagination?.limit, syncScrollButtons])
+
+  const scrollToTop = () => {
+    const container = scrollContainerRef.current
+    if (!container) return
+    container.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const scrollToBottom = () => {
+    const container = scrollContainerRef.current
+    if (!container) return
+    container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' })
+  }
+
   return (
     <Card className="overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-150 text-left text-sm">
-          <thead className="border-b border-border-gold bg-primary/10 text-secondary">
+      <div className="relative">
+        <div ref={scrollContainerRef} className="max-h-[65vh] overflow-auto">
+          <table className="w-full min-w-150 text-left text-sm">
+            <thead className="text-secondary">
             <tr>
               {columns.map((column) => (
                 <th
                   key={column.key}
                   style={{ width: column.width }}
-                  className="px-4 py-3 text-xs font-bold uppercase tracking-wide"
+                  className="sticky top-0 z-10 border-b border-border-gold bg-[#faf5e8] px-4 py-3 text-xs font-bold uppercase tracking-wide"
                 >
                   <div className="flex items-center gap-1.5">
                     {column.header}
@@ -101,7 +144,7 @@ export const DataTable = <T,>({
                   </div>
                 </th>
               ))}
-              {actions && <th className="px-4 py-3 text-center text-xs font-bold uppercase tracking-wide">Actions</th>}
+              {actions && <th className="sticky top-0 z-10 border-b border-border-gold bg-[#faf5e8] px-4 py-3 text-center text-xs font-bold uppercase tracking-wide">Actions</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-border-gold">
@@ -161,7 +204,30 @@ export const DataTable = <T,>({
               ))
             )}
           </tbody>
-        </table>
+          </table>
+        </div>
+        {(canScrollUp || canScrollDown) && (
+          <div className="pointer-events-none absolute bottom-3 right-3 flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={scrollToTop}
+              disabled={!canScrollUp}
+              aria-label="Scroll table to top"
+              className="pointer-events-auto rounded-full border border-border-gold bg-white/95 p-2 text-secondary shadow-sm transition-colors hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <ChevronUp size={16} />
+            </button>
+            <button
+              type="button"
+              onClick={scrollToBottom}
+              disabled={!canScrollDown}
+              aria-label="Scroll table to bottom"
+              className="pointer-events-auto rounded-full border border-border-gold bg-white/95 p-2 text-secondary shadow-sm transition-colors hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <ChevronDown size={16} />
+            </button>
+          </div>
+        )}
       </div>
       {pagination && (
         <div className="flex flex-col gap-3 border-t border-border-gold bg-primary/5 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
