@@ -12,7 +12,6 @@ import {
   Wallet,
 } from "lucide-react";
 import {
-  HighestCard,
   InfoCard,
   KpiCard,
 } from "../../components/dashboard/DashboardCards";
@@ -86,9 +85,12 @@ export const Dashboard = () => {
     });
   }, [toast, user]);
 
-  const { highestParty, highestSupplier } = dashboard?.balances ?? {
-    highestParty: null,
-    highestSupplier: null,
+  const {
+    parties: partyBalances,
+    suppliers: supplierBalances,
+  } = dashboard?.balances ?? {
+    parties: [],
+    suppliers: [],
   };
   const value = (amount: number | string) => (loading ? "..." : amount);
   const navigateTo = (path: string) => () => navigate(path);
@@ -351,20 +353,58 @@ export const Dashboard = () => {
             HIGHEST BALANCES
           </h3>
           <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <HighestCard
-              label="Highest Party Pending"
-              name={highestParty?.name ?? "No pending party balance"}
-              amount={highestParty?.amount}
-              formatCurrency={currency.format}
-              accent="primary"
-            />
-            <HighestCard
-              label="Highest Supplier Payable"
-              name={highestSupplier?.name ?? "No supplier payable balance"}
-              amount={highestSupplier?.amount}
-              formatCurrency={currency.format}
-              accent="secondary"
-            />
+            <article className="premium-card p-3">
+              <h4 className="mb-3 text-xs font-semibold uppercase tracking-wide text-primary-dark">
+                Highest Party Pending
+              </h4>
+              {partyBalances.length === 0 ? (
+                <p className="text-sm text-text-secondary">
+                  No outstanding party balances.
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {partyBalances.slice(0, 10).map((party) => (
+                    <div
+                      key={`${party.id}-${party.name}`}
+                      className="flex items-center justify-between rounded-lg border border-border-gold px-3 py-2"
+                    >
+                      <span className="text-sm font-medium text-secondary">
+                        {party.name}
+                      </span>
+                      <span className="text-sm font-semibold text-secondary">
+                        {currency.format(party.amount)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </article>
+            <article className="premium-card p-3">
+              <h4 className="mb-3 text-xs font-semibold uppercase tracking-wide text-secondary">
+                Highest Supplier Payable
+              </h4>
+              {supplierBalances.length === 0 ? (
+                <p className="text-sm text-text-secondary">
+                  No outstanding supplier balances.
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {supplierBalances.slice(0, 10).map((supplier) => (
+                    <div
+                      key={`${supplier.id}-${supplier.name}`}
+                      className="flex items-center justify-between rounded-lg border border-border-gold px-3 py-2"
+                    >
+                      <span className="text-sm font-medium text-secondary">
+                        {supplier.name}
+                      </span>
+                      <span className="text-sm font-semibold text-secondary">
+                        {currency.format(supplier.amount)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </article>
           </div>
         </section>
 

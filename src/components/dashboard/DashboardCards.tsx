@@ -1,4 +1,5 @@
 import type { LucideIcon } from "lucide-react";
+import { Eye } from "lucide-react";
 import type { ReactNode } from "react";
 
 type Accent = "primary" | "primaryDark" | "secondary";
@@ -190,12 +191,16 @@ export const HighestCard = ({
   amount,
   formatCurrency,
   accent = "primary",
+  onViewAll,
+  viewAllLabel = "View all",
 }: {
   label: string;
   name: string;
   amount?: number;
   formatCurrency: (value: number) => string;
   accent?: Accent;
+  onViewAll?: () => void;
+  viewAllLabel?: string;
 }) => {
   const colors = accentClasses[accent];
   return (
@@ -208,9 +213,22 @@ export const HighestCard = ({
         </p>
         <p className="mt-0.5 text-xs font-bold text-text-primary">{name}</p>
       </div>
-      <p className={`text-sm font-bold tabular-nums ${colors.text}`}>
-        {amount === undefined ? "-" : formatCurrency(amount)}
-      </p>
+      <div className="flex items-center gap-2">
+        <p className={`text-sm font-bold tabular-nums ${colors.text}`}>
+          {amount === undefined ? "-" : formatCurrency(amount)}
+        </p>
+        {onViewAll && (
+          <button
+            type="button"
+            onClick={onViewAll}
+            title={viewAllLabel}
+            aria-label={viewAllLabel}
+            className="rounded-full border border-border-gold bg-white p-1 text-text-secondary transition-colors hover:bg-primary/10 hover:text-secondary"
+          >
+            <Eye size={14} />
+          </button>
+        )}
+      </div>
     </article>
   );
 };

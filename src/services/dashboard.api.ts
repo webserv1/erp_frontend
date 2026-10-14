@@ -43,6 +43,8 @@ export interface LowStockAlert {
 export interface BalanceSummary {
   partyOutstanding: number;
   supplierPayable: number;
+  parties: { id: number | null; name: string; amount: number }[];
+  suppliers: { id: number | null; name: string; amount: number }[];
   highestParty: { id: number | null; name: string; amount: number } | null;
   highestSupplier: { id: number | null; name: string; amount: number } | null;
 }
@@ -109,6 +111,7 @@ export const dashboardApi = {
       `/dashboard${qs ? `?${qs}` : ""}`,
     ).then((res) => {
       const dashboard = res.dashboard ?? {};
+      const balances: Partial<BalanceSummary> = dashboard.balances ?? {};
       return {
         totalProducts: dashboard.totalProducts ?? 0,
         totalSuppliers: dashboard.totalSuppliers ?? 0,
@@ -129,11 +132,15 @@ export const dashboardApi = {
         lowStockAlerts: Array.isArray(dashboard.lowStockAlerts)
           ? dashboard.lowStockAlerts
           : [],
-        balances: dashboard.balances ?? {
-          partyOutstanding: 0,
-          supplierPayable: 0,
-          highestParty: null,
-          highestSupplier: null,
+        balances: {
+          partyOutstanding: balances.partyOutstanding ?? 0,
+          supplierPayable: balances.supplierPayable ?? 0,
+          parties: Array.isArray(balances.parties) ? balances.parties : [],
+          suppliers: Array.isArray(balances.suppliers)
+            ? balances.suppliers
+            : [],
+          highestParty: balances.highestParty ?? null,
+          highestSupplier: balances.highestSupplier ?? null,
         },
         overduePartyReminders: Array.isArray(dashboard.overduePartyReminders)
           ? dashboard.overduePartyReminders
