@@ -214,7 +214,7 @@ export const PartyMaster = () => {
     },
     {
       key: "remainingBalanceAfterReturn",
-      header: "After Return Pending",
+      header: "After Return Pending Balance",
       width: "190px",
       cell: (row) => `₹${row.remainingBalanceAfterReturn ?? 0}`,
     },
@@ -530,7 +530,7 @@ export const PartyMaster = () => {
                 </tr>
                 <tr>
                   <td className="px-4 py-2 font-semibold text-text-secondary">
-                    After Return Pending
+                    After Return Pending Balance
                   </td>
                   <td className="px-4 py-2 text-secondary">
                     ₹{viewing.remainingBalanceAfterReturn ?? 0}
