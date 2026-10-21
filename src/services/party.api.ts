@@ -6,6 +6,8 @@ type PartyPayload = Omit<
   | 'id'
   | 'companyId'
   | 'sales_profit'
+  | 'sales_loss'
+  | 'return_amount_paid'
   | 'totalPurchase'
   | 'remainingBalance'
   | 'invoiceCount'
