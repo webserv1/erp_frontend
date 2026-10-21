@@ -225,6 +225,12 @@ export const PartyMaster = () => {
       cell: (row) => `₹${row.sales_loss}`,
     },
     {
+      key: "return_amount_paid",
+      header: "Return Paid",
+      width: "150px",
+      cell: (row) => `₹${row.return_amount_paid ?? 0}`,
+    },
+    {
       key: "invoiceCount",
       header: "Invoices",
       width: "220px",
@@ -418,7 +424,9 @@ export const PartyMaster = () => {
             ? columns
             : columns.filter(
                 (column) =>
-                  column.key !== "sales_profit" && column.key !== "sales_loss",
+                  column.key !== "sales_profit" &&
+                  column.key !== "sales_loss" &&
+                  column.key !== "return_amount_paid",
               )
         }
         rows={paginatedItems}
@@ -570,6 +578,16 @@ export const PartyMaster = () => {
                     </td>
                     <td className="px-4 py-2 text-secondary">
                       ₹{viewing.sales_loss}
+                    </td>
+                  </tr>
+                )}
+                {isAdmin && (
+                  <tr>
+                    <td className="px-4 py-2 font-semibold text-text-secondary">
+                      Return Paid
+                    </td>
+                    <td className="px-4 py-2 text-secondary">
+                      ₹{viewing.return_amount_paid ?? 0}
                     </td>
                   </tr>
                 )}
