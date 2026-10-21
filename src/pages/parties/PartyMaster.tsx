@@ -220,9 +220,15 @@ export const PartyMaster = () => {
     },
     {
       key: "sales_profit",
-      header: "Party Profit",
+      header: "Total Profit",
       width: "140px",
       cell: (row) => `₹${row.sales_profit}`,
+    },
+    {
+      key: "sales_profit_after_return",
+      header: "Profit After Return",
+      width: "180px",
+      cell: (row) => `₹${row.sales_profit_after_return ?? 0}`,
     },
     {
       key: "sales_loss",
@@ -431,6 +437,7 @@ export const PartyMaster = () => {
             : columns.filter(
                 (column) =>
                   column.key !== "sales_profit" &&
+                  column.key !== "sales_profit_after_return" &&
                   column.key !== "sales_loss" &&
                   column.key !== "return_amount_paid",
               )
@@ -578,10 +585,20 @@ export const PartyMaster = () => {
                 {isAdmin && (
                   <tr>
                     <td className="px-4 py-2 font-semibold text-text-secondary">
-                      Party Profit
+                      Total Profit
                     </td>
                     <td className="px-4 py-2 text-secondary">
                       ₹{viewing.sales_profit}
+                    </td>
+                  </tr>
+                )}
+                {isAdmin && (
+                  <tr>
+                    <td className="px-4 py-2 font-semibold text-text-secondary">
+                      Profit After Return
+                    </td>
+                    <td className="px-4 py-2 text-secondary">
+                      ₹{viewing.sales_profit_after_return ?? 0}
                     </td>
                   </tr>
                 )}

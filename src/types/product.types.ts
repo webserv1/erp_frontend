@@ -181,6 +181,7 @@ export interface Party {
   country: string;
   pincode: string;
   sales_profit: number;
+  sales_profit_after_return?: number;
   sales_loss: number;
   return_amount_paid?: number;
   totalPurchase?: number;
