@@ -238,7 +238,7 @@ export const PartyMaster = () => {
     },
     {
       key: "return_amount_paid",
-      header: "Return Paid",
+      header: "Return amount",
       width: "150px",
       cell: (row) => `₹${row.return_amount_paid ?? 0}`,
     },
@@ -615,7 +615,7 @@ export const PartyMaster = () => {
                 {isAdmin && (
                   <tr>
                     <td className="px-4 py-2 font-semibold text-text-secondary">
-                      Return Paid
+                      Return amount
                     </td>
                     <td className="px-4 py-2 text-secondary">
                       ₹{viewing.return_amount_paid ?? 0}
