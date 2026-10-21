@@ -10,6 +10,7 @@ type PartyPayload = Omit<
   | 'return_amount_paid'
   | 'totalPurchase'
   | 'remainingBalance'
+  | 'remainingBalanceAfterReturn'
   | 'invoiceCount'
   | 'invoiceNumbers'
   | 'createdAt'

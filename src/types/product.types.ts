@@ -185,6 +185,7 @@ export interface Party {
   return_amount_paid?: number;
   totalPurchase?: number;
   remainingBalance?: number;
+  remainingBalanceAfterReturn?: number;
   invoiceCount?: number;
   invoiceNumbers?: string[];
   status: boolean;
