@@ -672,13 +672,8 @@ export const Sales = () => {
             </h2>
           </div>
         </div>
-        <Button
-          onClick={() => {
-            reset();
-            window.scrollTo({ top: 0, behavior: "smooth" });
-          }}
-        >
-          + Add Sale
+        <Button onClick={() => navigate("/sales/old-balance")}>
+          + Add Old Balance
         </Button>
       </div>
 

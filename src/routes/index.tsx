@@ -12,6 +12,7 @@ import { PartyMaster } from '../pages/parties/PartyMaster'
 import { SupplierMaster } from '../pages/suppliers/SupplierMaster'
 import { PurchaseMaster } from '../pages/purchases/PurchaseMaster'
 import { Sales } from '../pages/sales/Sales'
+import { OldBalancePage } from '../pages/sales/OldBalance'
 import { StockMaster } from '../pages/stock/StockMaster'
 import { ExpenseMaster } from '../pages/expenses/ExpenseMaster'
 import { ProfitWithdrawals } from '../pages/expenses/ProfitWithdrawals'
@@ -40,6 +41,7 @@ export const AppRoutes = () => (
         <Route path="/suppliers" element={<SupplierMaster />} />
         <Route path="/purchases" element={<PurchaseMaster />} />
         <Route path="/sales" element={<Sales />} />
+        <Route path="/sales/old-balance" element={<OldBalancePage />} />
         <Route path="/stock" element={<StockMaster />} />
         <Route path="/expenses" element={<ExpenseMaster />} />
         <Route path="/expenses/profit-withdrawals" element={<ProfitWithdrawals />} />

@@ -350,6 +350,36 @@ export interface SaleListResponse {
   limit: number;
 }
 
+export interface OldBalance {
+  id: number;
+  companyId: number;
+  partyId: number;
+  partyName: string;
+  oldBalanceAmount: number;
+  qty: number;
+  purchasePrice: number;
+  salePrice: number;
+  profit: number;
+  billUrl?: string | null;
+  createdById?: number | null;
+  status: boolean;
+  createdAt: string;
+  updatedAt: string;
+  party?: {
+    id: number;
+    partyName: string;
+    shopName: string;
+    mobile: string;
+  };
+}
+
+export interface OldBalanceListResponse {
+  oldBalance: OldBalance[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 export interface Stock {
   id: number;
   companyId: number;
