@@ -314,6 +314,15 @@ export const Dashboard = () => {
 
   return (
     <div className="relative isolate min-h-full">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 z-0 rounded-2xl"
+        style={{
+          backgroundImage:
+            "linear-gradient(135deg, rgba(17, 24, 39, 0.08) 0%, rgba(17, 24, 39, 0.03) 45%, rgba(17, 24, 39, 0.01) 100%)",
+        }}
+      />
+
       {isSqarsGarments && (
         <div
           aria-hidden="true"
